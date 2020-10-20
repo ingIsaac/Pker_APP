@@ -1,0 +1,23 @@
+{
+  "name": "Pker_APP",
+  "version": "1.0.0.1",
+  "description": "Game",
+  "main": "src/index.js",
+  "repository": "https://github.com/ingIsaac/Pker_APP",
+  "author": "Isaac",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "nodemon start",
+    "start": "node start"
+  },
+  "dependencies": {
+    "colors": "^1.4.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-flash": "0.0.2",
+    "express-handlebars": "^5.1.0",
+    "morgan": "^1.10.0",
+    "socket.io": "^2.3.0"
+  }
+}

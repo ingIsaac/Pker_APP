@@ -1,0 +1,21 @@
+.card {
+    margin-top: 3em;
+}
+
+.card-header {
+    text-align: center;
+    position: relative;
+}
+
+footer {
+    margin-bottom: 0;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color:#212529;
+    color: #D0CBCB;
+    z-index: 99;
+    padding: 0.3em 0 0.3em 0;
+}
