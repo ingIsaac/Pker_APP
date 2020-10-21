@@ -1,0 +1,16 @@
+<div class="container p-4">
+    <div class="row">
+         <div class="col-md-5 mx-auto">
+              
+         </div>
+    </div>
+</div>
+<script>
+    $(function (){
+        const socket = io();
+        //Get Message
+        socket.on('message', (data) => {
+            toastr.info(data);
+        });
+    });
+</script>
