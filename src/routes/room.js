@@ -2,63 +2,114 @@ const express = require('express');
 const router = express.Router();
 const uid = require('uid');
 
+function joinPlayerRoom(IO, socket, room)
+{
+    socket.join(room);
+    IO.to(room).emit('connected', socket.id + " se ha unido a esta partida.");
+}
+
+function sendPlayerList(IO, room)
+{
+    if(IO.sockets.adapter.rooms[room]){
+        let p = [];
+        let k = null;
+        let u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+        for(let i=0; i < u.length; i++)
+        {
+            k = IO.sockets.connected[u[i]];
+            if(k){
+                if(k.nombre){
+                    p.push({id: u[i], nombre: k.nombre});
+                }else{
+                    p.push({id: u[i], nombre: ''});
+                }
+            }                   
+        }
+        IO.to(room).emit('players', p);
+    }
+}
+
 router.get('/room', (req, res) => {
     let room = req.query.r;
-    let rooms = req.app.locals.Rooms;
-
+    let Rooms = req.app.locals.Rooms;
+    let _Rooms = null;
     //-------------------------------->
     const IO = req.app.locals.IO;
-    let Players = req.app.locals.Players;
+    const Players = Object.keys(IO.sockets.sockets);
     
-    IO.on('connection', (socket) => {
-        console.log("User connected: " + socket.id);
+    //Check if a valid room
+    const r = Rooms.find(_room => {
+        if(_room)
+        {
+           return _room.id === room        
+        }
+    });
+    if(!r)
+    {
+       return res.redirect('/')
+    }
+
+    //User Connection
+    IO.once('connection', (socket) => {
+
+        //Add User to Players
         const t = Players.find(player => {
             if(player)
             {
-               return player.id === socket.id         
+               return player === socket.id         
             }
         });
         if(!t)
         {
-            Players.push({id: socket.id});
-        }
-        //Set to a Room
-        const _r = IO.sockets.adapter.rooms[room];
-        if(_r)
-        {
-            if(_r.length < 8)
+            console.log("User connected: " + socket.id);
+            
+            //Add User to a Room
+            _Rooms = IO.sockets.adapter.rooms[room];
+            if(_Rooms)
             {
-                socket.join(room);
+                if(_Rooms.length < 8)
+                {
+                    joinPlayerRoom(IO, socket, room)
+                }
+                else
+                {
+                    room = {id: uid(25)};
+                    Rooms.push(room);
+                    joinPlayerRoom(IO, socket, room)
+                }
             }
             else
             {
-                room = uid(25);
-                rooms.push(room);
-                socket.join(room);
+                joinPlayerRoom(IO, socket, room)
             }
-        }
-        else
-        {
-            socket.join(room);
+            
+            //Send List of Players
+            sendPlayerList(IO, room)
         }
         
-        IO.to(room).emit('message', socket.id + " se ha unido a esta partida.");
-
-        //Disconnect
+        //User Disconnect
         socket.on('disconnect', () => {
+            //Get player => Players          
             console.log("User disconnected: " + socket.id);
-            let t = []
-            t = Players.filter(player => {
-                if(player)
-                {
-                    return player.id !== socket.id
-                }
-            })
-            Players = t;
-            IO.to(room).emit('message', socket.id + " ha abandonado esta partida.");
-        })
+            IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
+            //Send List of Players
+            sendPlayerList(IO, room)
+        }) 
+        
+        //Get Data
+        socket.on('status', data => {
+            console.log(data);
+        });
+        socket.on('nombre', nombre => {
+            socket.nombre = nombre;
+            //Send List of Players
+            sendPlayerList(IO, room)
+        });
+
+        //Send Data
+        
     });
-    res.render('links/room', {id: room});
+    res.render('links/room', {room_id: room});
 });
 
 module.exports = router;

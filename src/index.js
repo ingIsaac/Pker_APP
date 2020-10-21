@@ -36,7 +36,6 @@ app.use(bodyParser.urlencoded({extended: true}));
 //locals
 app.locals.appName = process.env._APP_NAME;
 app.locals.Rooms = [];
-app.locals.Players = [];
 
 //routes
 app.use(require('./routes/home'));
@@ -50,7 +49,7 @@ app.use(function(req, res){
 //starting server
 const server = app.listen(app.get('port'), () => {
     console.log("Server on port:".yellow, app.get('port').red);
-    app.locals.Rooms.push({id: uid(25)});
+    app.locals.Rooms.push({id: uid(25), status: false});
 });
 
 //WebSockets
