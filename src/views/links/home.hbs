@@ -7,7 +7,7 @@
                     </div>
                     <div class="card-body" style="text-align: center;">
                         {{#if room}}
-                            <a href="http://localhost:3000/room?r={{room}}">http://localhost:3000/room?r={{room}}</a>
+                            <a href="http://{{url}}/room?r={{room}}">http://{{url}}/room?r={{room}}</a>
                         {{else}}
                             <form action="/create" method="post">
                                 <button type="submit" class="btn btn-primary">Crear</button> 

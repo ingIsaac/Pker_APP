@@ -34,16 +34,13 @@ footer {
 }
 
 #sidebar-wrapper .sidebar-heading {
+  text-align: center;
   padding: 0.875rem 1.25rem;
   font-size: 1.2rem;
 }
 
 #sidebar-wrapper .list-group {
   width: 15rem;
-}
-
-#page-content-wrapper {
-  min-width: 100vw;
 }
 
 #wrapper.toggled #sidebar-wrapper {
@@ -70,8 +67,12 @@ footer {
   flex-wrap: wrap;
 }
 
-@media only screen and (max-width: 350px) {
+#board div:hover {
+  cursor: pointer;
+}
+
+@media only screen and (max-width: 750px) {
   #board img {
-    width: 250px;
+    width: 500px;
   }
 }

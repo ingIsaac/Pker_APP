@@ -34,7 +34,7 @@ function sendPlayerList(IO, room)
     }
 }
 
-function setupGame(IO, room)
+function setupGame(IO, room, req)
 {
     const cards = [
         {value: 1, type: "h", img: "ace_of_hearts.svg"},
@@ -97,7 +97,7 @@ function setupGame(IO, room)
 
     const _Rooms = IO.sockets.adapter.rooms[room];
     if(_Rooms){player_count = _Rooms.length}
-    while(deck.length < (player_count*5))
+    while(deck.length < ((player_count*5) + 5))
     {
         const _c = cards[getRandomInt(0,52)]
         const t = deck.find(c => {return (c.value+c.type) === (_c.value+_c.type)})
@@ -123,6 +123,55 @@ function setupGame(IO, room)
                 k.emit('init', k.juego);
             }                   
         }
+        //Room Settings
+        const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+        if(Room)
+        {
+            //Disable Room
+            Room.settings.available = false;
+            //Set table Cards
+            Room.settings.c_table = [];
+            for(let i=((player_count*5)-1); i < (((player_count*5)-1)+5); i++)
+            {
+                Room.settings.c_table.push(deck[i]);                
+            }
+            //Other Settings
+            Room.settings.c_ronda = false;
+            Room.settings.n_turn = 0;
+            Room.settings.p_knock = null;
+            const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+            Room.settings.pivote = u[getRandomInt(0, u.length-1)];
+            Room.settings.p_turn = Room.settings.pivote;       
+            //Send Data
+            IO.to(room).emit('room_data', Room.settings);
+        }
+    }
+}
+
+function nextTurn(IO, room, socket, req)
+{
+    if(IO.sockets.adapter.rooms[room]){
+        const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+        const t = u.findIndex(p => p == socket.id)
+        let next = null;
+        if(t < u.length-1){
+            next = u[t+1];
+        }
+        else{
+            next = u[0];
+        }
+
+        const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+        if(Room)
+        {
+            Room.settings.p_turn = next;
+            Room.settings.n_turn += 1;
+            if(u.length == Room.settings.n_turn)
+            {
+                Room.settings.c_ronda = true;
+            }
+            IO.to(room).emit('room_data', Room.settings);
+        }
     }
 }
 
@@ -133,12 +182,11 @@ router.get('/room', (req, res) => {
     const IO = req.app.locals.IO;
     const Players = Object.keys(IO.sockets.sockets);
     
-    console.log(room);
     //Check if a valid room
     const r = Rooms.find(_room => {
         if(_room)
         {
-           return _room.id === room        
+           return _room.id === room && _room.settings.available       
         }
     });
     if(!r)
@@ -199,13 +247,16 @@ router.get('/room', (req, res) => {
         }) 
         
         //Get Data
-        socket.on('init', data => {
-            setupGame(IO, room)
+        socket.on('init', () => {
+            setupGame(IO, room, req)
         });
         socket.on('nombre', nombre => {
             socket.nombre = nombre;
             //Send List of Players
             sendPlayerList(IO, room)
+        });
+        socket.on('end_turn', data => {
+            nextTurn(IO, room, socket, req);
         });
 
         //Send Data
