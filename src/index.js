@@ -49,7 +49,6 @@ app.use(function(req, res){
 //starting server
 const server = app.listen(app.get('port'), () => {
     console.log("Server on port:".yellow, app.get('port').red);
-    app.locals.Rooms.push({id: uid(25), status: false});
 });
 
 //WebSockets

@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const uid = require('uid');
 
+function getRandomInt(min, max) 
+{
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+
 function joinPlayerRoom(IO, socket, room)
 {
     socket.join(room);
@@ -29,14 +34,106 @@ function sendPlayerList(IO, room)
     }
 }
 
+function setupGame(IO, room)
+{
+    const cards = [
+        {value: 1, type: "h", img: "ace_of_hearts.svg"},
+        {value: 2, type: "h", img: "2_of_hearts.svg"},
+        {value: 3, type: "h", img: "3_of_hearts.svg"},
+        {value: 4, type: "h", img: "4_of_hearts.svg"},
+        {value: 5, type: "h", img: "5_of_hearts.svg"},
+        {value: 6, type: "h", img: "6_of_hearts.svg"},
+        {value: 7, type: "h", img: "7_of_hearts.svg"},
+        {value: 8, type: "h", img: "8_of_hearts.svg"},
+        {value: 9, type: "h", img: "9_of_hearts.svg"},
+        {value: 10, type: "h", img: "10_of_hearts.svg"},
+        {value: 11, type: "h", img: "jack_of_hearts.svg"},
+        {value: 12, type: "h", img: "queen_of_hearts.svg"},
+        {value: 13, type: "h", img: "king_of_hearts.svg"},
+        {value: 1, type: "d", img: "ace_of_diamonds.svg"},
+        {value: 2, type: "d", img: "2_of_diamonds.svg"},
+        {value: 3, type: "d", img: "3_of_diamonds.svg"},
+        {value: 4, type: "d", img: "4_of_diamonds.svg"},
+        {value: 5, type: "d", img: "5_of_diamonds.svg"},
+        {value: 6, type: "d", img: "6_of_diamonds.svg"},
+        {value: 7, type: "d", img: "7_of_diamonds.svg"},
+        {value: 8, type: "d", img: "8_of_diamonds.svg"},
+        {value: 9, type: "d", img: "9_of_diamonds.svg"},
+        {value: 10, type: "d", img: "10_of_diamonds.svg"},
+        {value: 11, type: "d", img: "jack_of_diamonds.svg"},
+        {value: 12, type: "d", img: "queen_of_diamonds.svg"},
+        {value: 13, type: "d", img: "king_of_diamonds.svg"},
+        {value: 1, type: "c", img: "ace_of_clubs.svg"},
+        {value: 2, type: "c", img: "2_of_clubs.svg"},
+        {value: 3, type: "c", img: "3_of_clubs.svg"},
+        {value: 4, type: "c", img: "4_of_clubs.svg"},
+        {value: 5, type: "c", img: "5_of_clubs.svg"},
+        {value: 6, type: "c", img: "6_of_clubs.svg"},
+        {value: 7, type: "c", img: "7_of_clubs.svg"},
+        {value: 8, type: "c", img: "8_of_clubs.svg"},
+        {value: 9, type: "c", img: "9_of_clubs.svg"},
+        {value: 10, type: "c", img: "10_of_clubs.svg"},
+        {value: 11, type: "c", img: "jack_of_clubs.svg"},
+        {value: 12, type: "c", img: "queen_of_clubs.svg"},
+        {value: 13, type: "c", img: "king_of_clubs.svg"},
+        {value: 1, type: "s", img: "ace_of_spades.svg"},
+        {value: 2, type: "s", img: "2_of_spades.svg"},
+        {value: 3, type: "s", img: "3_of_spades.svg"},
+        {value: 4, type: "s", img: "4_of_spades.svg"},
+        {value: 5, type: "s", img: "5_of_spades.svg"},
+        {value: 6, type: "s", img: "6_of_spades.svg"},
+        {value: 7, type: "s", img: "7_of_spades.svg"},
+        {value: 8, type: "s", img: "8_of_spades.svg"},
+        {value: 9, type: "s", img: "9_of_spades.svg"},
+        {value: 10, type: "s", img: "10_of_spades.svg"},
+        {value: 11, type: "s", img: "jack_of_spades.svg"},
+        {value: 12, type: "s", img: "queen_of_spades.svg"},
+        {value: 13, type: "s", img: "king_of_spades.svg"},
+        {value: 0, type: "j", img: "red_joker.svg"}
+    ]
+    
+    let deck = []
+    let player_count = 0
+
+    const _Rooms = IO.sockets.adapter.rooms[room];
+    if(_Rooms){player_count = _Rooms.length}
+    while(deck.length < (player_count*5))
+    {
+        const _c = cards[getRandomInt(0,52)]
+        const t = deck.find(c => {return (c.value+c.type) === (_c.value+_c.type)})
+        if(!t)
+        {
+            deck.push(_c);
+        }
+    }
+
+    if(IO.sockets.adapter.rooms[room]){
+        let k = null;
+        let u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+        for(let i=0; i < u.length; i++)
+        {
+            let hand = [];
+            for(let v=i*5; v < ((i+1)*5); v++)
+            {
+                hand.push(deck[v]);
+            }
+            k = IO.sockets.connected[u[i]];
+            if(k){
+                k.juego = {points: 0, chips: 2, hand: hand};
+                k.emit('init', k.juego);
+            }                   
+        }
+    }
+}
+
 router.get('/room', (req, res) => {
     let room = req.query.r;
     let Rooms = req.app.locals.Rooms;
-    let _Rooms = null;
     //-------------------------------->
     const IO = req.app.locals.IO;
     const Players = Object.keys(IO.sockets.sockets);
     
+    console.log(room);
     //Check if a valid room
     const r = Rooms.find(_room => {
         if(_room)
@@ -46,7 +143,18 @@ router.get('/room', (req, res) => {
     });
     if(!r)
     {
-       return res.redirect('/')
+        return res.redirect('/')
+    }
+    else
+    {
+        const _Rooms = IO.sockets.adapter.rooms[r];
+        if(_Rooms)
+        {
+            if(_Rooms.length >= 8)
+            {
+                return res.redirect('/')
+            }        
+        }   
     }
 
     //User Connection
@@ -64,24 +172,18 @@ router.get('/room', (req, res) => {
             console.log("User connected: " + socket.id);
             
             //Add User to a Room
-            _Rooms = IO.sockets.adapter.rooms[room];
+            const _Rooms = IO.sockets.adapter.rooms[room];
             if(_Rooms)
             {
                 if(_Rooms.length < 8)
                 {
                     joinPlayerRoom(IO, socket, room)
-                }
-                else
-                {
-                    room = {id: uid(25)};
-                    Rooms.push(room);
-                    joinPlayerRoom(IO, socket, room)
-                }
+                }        
             }
             else
             {
                 joinPlayerRoom(IO, socket, room)
-            }
+            }      
             
             //Send List of Players
             sendPlayerList(IO, room)
@@ -97,8 +199,8 @@ router.get('/room', (req, res) => {
         }) 
         
         //Get Data
-        socket.on('status', data => {
-            console.log(data);
+        socket.on('init', data => {
+            setupGame(IO, room)
         });
         socket.on('nombre', nombre => {
             socket.nombre = nombre;

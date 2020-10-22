@@ -3,14 +3,16 @@
          <div class="col-md-5 mx-auto">
               <div class="card">
                     <div class="card-header">
-                        <h2>Rooms</h2> 
+                        <h2>Crear Partida</h2> 
                     </div>
-                    <div class="card-body">
-                        <div class="list-group" style="text-align: center;">
-                        {{#each rooms}}
-                            <a href="/room?r={{this.id}}" class="list-group-item list-group-item-action">{{this.id}}</a>
-                        {{/each}}
-                        </div>
+                    <div class="card-body" style="text-align: center;">
+                        {{#if room}}
+                            <a href="http://localhost:3000/room?r={{room}}">http://localhost:3000/room?r={{room}}</a>
+                        {{else}}
+                            <form action="/create" method="post">
+                                <button type="submit" class="btn btn-primary">Crear</button> 
+                            </form>
+                        {{/if}}                       
                     </div>
               </div>
          </div>
