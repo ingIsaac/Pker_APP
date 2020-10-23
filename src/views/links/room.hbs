@@ -19,22 +19,34 @@
           <div id="c_table" style="display: inline-flex;"></div>
           <div id="c_player" style="display: inline-flex;"></div>
         </div>
-        <div style="margin-top: 2em;">
-          <button style="margin: 0.5em;" class="btn btn-info btn-block" id="init">Iniciar Partida</button>
-          <button style="margin: 0.5em;" class="btn btn-info btn-block" id="end_turn">Terminar Turno</button>
-          <button style="margin: 0.5em;" class="btn btn-danger btn-block" id="tocar">Tocar</button>
-          <hr>                              
-          <button style="margin: 0.5em;" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal">Cambiar Nombre</button>                        
+        <div class="row" style="margin: 1em 0 2em 0;">
+          <div class="col-md-6">
+            <button style="margin: 0.5em;" class="btn btn-info btn-block" id="init">Iniciar Partida</button>
+            <button style="margin: 0.5em;" class="btn btn-info btn-block" id="end_turn">Terminar Turno</button>
+            <button style="margin: 0.5em;" class="btn btn-info btn-block" id="take_all">Tomar Todas</button>
+            <button style="margin: 0.5em;" class="btn btn-danger btn-block" id="tocar">Tocar</button>
+            <hr>                              
+            <button style="margin: 0.5em;" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal">Cambiar Nombre</button>
+            <a class="btn btn-dark btn-block" style="margin: 0.5em;" href="/">Salir</a>
+          </div>
+          <div class="col-md-6">
+            <ul id="player_data" class="list-group">
+              <li class="list-group-item">Fichas: <p id="p_fichas"></p></li>
+              <li class="list-group-item">Puntos: <p id="p_puntos"></p></li>
+              <li class="list-group-item">Viudas Restantes: <p id="_viudas"></p></li>
+            </ul>
+          </div>                      
         </div>
       </div>
     </div>
     <!-- #content -->
   </div>
 </div>
+{{! Cambiar Nombre }}
 <div class="modal" id="modal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header" style="text-align: center;">
         <h5 class="modal-title">Nombre de Jugador</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
@@ -46,6 +58,26 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="nombre">Guardar</button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{! Comprar Viuda }}
+<div class="modal" id="modal2" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header" style="text-align: center;">
+        <h5 class="modal-title">Sin Fichas!</h5>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <h4>Te has quedado sin fichas</h4>
+        <p>Para seguir en el juego necesitas comprar un ficha Viuda por:</p>
+        <h2>500</h2>
+        <p>puntos</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="comprar_viuda">Comprar</button>
+        <a class="btn btn-dark" href="/">Salir</a>
       </div>
     </div>
   </div>
@@ -63,6 +95,7 @@
       //-->
       $('#init').show();
       $('#end_turn').hide();
+      $('#take_all').hide();
       $('#tocar').hide();      
     }
 
@@ -130,7 +163,6 @@
           $(e).css({"padding-top": "2em"});
           pick.t_card = $(e).attr('id');
           //Send
-          //Send
           if(pick.p_card !== '' && pick.t_card !== '')
           {
             socket.emit('pick', pick);
@@ -189,7 +221,7 @@
         });
         socket.on('init', () => {
             //Disable Init button
-            $('#init').hide();       
+            $('#init').hide();              
         });
         socket.on('set_player_cards', (data) => {
             $('#c_player').empty();
@@ -215,7 +247,7 @@
                 for(let i=0; i < data.c_table.length; i++)
                 {
                     $('#c_table').append('<div class="col-sm" id="' + (data.c_table[i].value + data.c_table[i].type) + '" style="padding-right: 0.2em; padding-top: 0;" onClick="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');
-                } 
+                }
               }
 
               //Set Turn Display
@@ -227,9 +259,24 @@
                 disable = false;
                 //Enable End_Turn button
                 $('#end_turn').show();
-                if(data.c_ronda){$('#tocar').show();}
+                if(data.c_ronda){
+                  $('#tocar').show();
+                  $('#take_all').hide();
+                  if(data.p_cantake === socket.id)
+                  {
+                    $('#take_all').show();
+                  }                
+                }
+                else{
+                  $('#tocar').hide();
+                  $('#take_all').show();   
+                }
               }
-              else{$('#end_turn').hide();$('#tocar').hide();}
+              else{
+                $('#end_turn').hide();
+                $('#tocar').hide();
+                $('#take_all').hide();
+              }
 
               //Get Game State
               if(data.p_knock)
@@ -239,6 +286,28 @@
                 if(socket.id !== data.p_knock)
                 {
                   toastr.error($('#p_name').text(), 'Ah tocado! Te queda solo un turno.');
+                }
+              }
+
+              //Viudad
+              $('#_viudas').text(data.widows);
+            }
+        });
+        socket.on('player_data', data => {
+            if(data)
+            {             
+              $('#p_fichas').text(data.chips);
+              $('#p_puntos').text(data.points);
+
+              if(data.chips === 0)
+              {
+                const viudas = $('#_viudas');
+                if(viudas > 0){
+                  $('#modal2').modal('show');
+                }
+                else{
+                  alert('Has perdido!');
+                  window.location.replace('/')
                 }
               }
             }
@@ -253,9 +322,20 @@
         $('#tocar').on('click', () => {
             socket.emit('tocar');
         });
+        $('#take_all').on('click', () => {
+            socket.emit('take_all');
+        });
         $('#nombre').on('click', () => {
             $('#modal').modal('hide');
             socket.emit('nombre', $('#t_nombre').val().toUpperCase());
+        });
+        $('#comprar_viuda').on('click', () => {
+            const points = $('#p_puntos');
+            if(points >= 500){
+              socket.emit('viuda_b');
+            }else{
+              alert('No tienes puntos suficientes.');
+            }
         });
     });
 </script>

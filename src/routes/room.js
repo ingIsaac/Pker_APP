@@ -1,59 +1,59 @@
 const express = require('express');
 const router = express.Router();
 const cards = [
-    {value: 1, type: "h", img: "ace_of_hearts.svg"},
-    {value: 2, type: "h", img: "2_of_hearts.svg"},
-    {value: 3, type: "h", img: "3_of_hearts.svg"},
-    {value: 4, type: "h", img: "4_of_hearts.svg"},
-    {value: 5, type: "h", img: "5_of_hearts.svg"},
-    {value: 6, type: "h", img: "6_of_hearts.svg"},
-    {value: 7, type: "h", img: "7_of_hearts.svg"},
-    {value: 8, type: "h", img: "8_of_hearts.svg"},
-    {value: 9, type: "h", img: "9_of_hearts.svg"},
-    {value: 10, type: "h", img: "10_of_hearts.svg"},
-    {value: 11, type: "h", img: "jack_of_hearts.svg"},
-    {value: 12, type: "h", img: "queen_of_hearts.svg"},
-    {value: 13, type: "h", img: "king_of_hearts.svg"},
-    {value: 1, type: "d", img: "ace_of_diamonds.svg"},
-    {value: 2, type: "d", img: "2_of_diamonds.svg"},
-    {value: 3, type: "d", img: "3_of_diamonds.svg"},
-    {value: 4, type: "d", img: "4_of_diamonds.svg"},
-    {value: 5, type: "d", img: "5_of_diamonds.svg"},
-    {value: 6, type: "d", img: "6_of_diamonds.svg"},
-    {value: 7, type: "d", img: "7_of_diamonds.svg"},
-    {value: 8, type: "d", img: "8_of_diamonds.svg"},
-    {value: 9, type: "d", img: "9_of_diamonds.svg"},
-    {value: 10, type: "d", img: "10_of_diamonds.svg"},
-    {value: 11, type: "d", img: "jack_of_diamonds.svg"},
-    {value: 12, type: "d", img: "queen_of_diamonds.svg"},
-    {value: 13, type: "d", img: "king_of_diamonds.svg"},
-    {value: 1, type: "c", img: "ace_of_clubs.svg"},
-    {value: 2, type: "c", img: "2_of_clubs.svg"},
-    {value: 3, type: "c", img: "3_of_clubs.svg"},
-    {value: 4, type: "c", img: "4_of_clubs.svg"},
-    {value: 5, type: "c", img: "5_of_clubs.svg"},
-    {value: 6, type: "c", img: "6_of_clubs.svg"},
-    {value: 7, type: "c", img: "7_of_clubs.svg"},
-    {value: 8, type: "c", img: "8_of_clubs.svg"},
-    {value: 9, type: "c", img: "9_of_clubs.svg"},
-    {value: 10, type: "c", img: "10_of_clubs.svg"},
-    {value: 11, type: "c", img: "jack_of_clubs.svg"},
-    {value: 12, type: "c", img: "queen_of_clubs.svg"},
-    {value: 13, type: "c", img: "king_of_clubs.svg"},
-    {value: 1, type: "s", img: "ace_of_spades.svg"},
-    {value: 2, type: "s", img: "2_of_spades.svg"},
-    {value: 3, type: "s", img: "3_of_spades.svg"},
-    {value: 4, type: "s", img: "4_of_spades.svg"},
-    {value: 5, type: "s", img: "5_of_spades.svg"},
-    {value: 6, type: "s", img: "6_of_spades.svg"},
-    {value: 7, type: "s", img: "7_of_spades.svg"},
-    {value: 8, type: "s", img: "8_of_spades.svg"},
-    {value: 9, type: "s", img: "9_of_spades.svg"},
-    {value: 10, type: "s", img: "10_of_spades.svg"},
-    {value: 11, type: "s", img: "jack_of_spades.svg"},
-    {value: 12, type: "s", img: "queen_of_spades.svg"},
-    {value: 13, type: "s", img: "king_of_spades.svg"},
-    {value: 0, type: "j", img: "red_joker.svg"}
+    {value: 1, type: "h", wildcard: false, img: "ace_of_hearts.svg"},
+    {value: 2, type: "h", wildcard: false, img: "2_of_hearts.svg"},
+    {value: 3, type: "h", wildcard: false, img: "3_of_hearts.svg"},
+    {value: 4, type: "h", wildcard: false, img: "4_of_hearts.svg"},
+    {value: 5, type: "h", wildcard: false, img: "5_of_hearts.svg"},
+    {value: 6, type: "h", wildcard: false, img: "6_of_hearts.svg"},
+    {value: 7, type: "h", wildcard: false, img: "7_of_hearts.svg"},
+    {value: 8, type: "h", wildcard: false, img: "8_of_hearts.svg"},
+    {value: 9, type: "h", wildcard: false, img: "9_of_hearts.svg"},
+    {value: 10, type: "h", wildcard: false, img: "10_of_hearts.svg"},
+    {value: 11, type: "h", wildcard: false, img: "jack_of_hearts.svg"},
+    {value: 12, type: "h", wildcard: false, img: "queen_of_hearts.svg"},
+    {value: 13, type: "h", wildcard: false, img: "king_of_hearts.svg"},
+    {value: 1, type: "d", wildcard: false, img: "ace_of_diamonds.svg"},
+    {value: 2, type: "d", wildcard: false, img: "2_of_diamonds.svg"},
+    {value: 3, type: "d", wildcard: false, img: "3_of_diamonds.svg"},
+    {value: 4, type: "d", wildcard: false, img: "4_of_diamonds.svg"},
+    {value: 5, type: "d", wildcard: false, img: "5_of_diamonds.svg"},
+    {value: 6, type: "d", wildcard: false, img: "6_of_diamonds.svg"},
+    {value: 7, type: "d", wildcard: false, img: "7_of_diamonds.svg"},
+    {value: 8, type: "d", wildcard: false, img: "8_of_diamonds.svg"},
+    {value: 9, type: "d", wildcard: false, img: "9_of_diamonds.svg"},
+    {value: 10, type: "d", wildcard: false, img: "10_of_diamonds.svg"},
+    {value: 11, type: "d", wildcard: false, img: "jack_of_diamonds.svg"},
+    {value: 12, type: "d", wildcard: false, img: "queen_of_diamonds.svg"},
+    {value: 13, type: "d", wildcard: false, img: "king_of_diamonds.svg"},
+    {value: 1, type: "c", wildcard: false, img: "ace_of_clubs.svg"},
+    {value: 2, type: "c", wildcard: false, img: "2_of_clubs.svg"},
+    {value: 3, type: "c", wildcard: false, img: "3_of_clubs.svg"},
+    {value: 4, type: "c", wildcard: false, img: "4_of_clubs.svg"},
+    {value: 5, type: "c", wildcard: false, img: "5_of_clubs.svg"},
+    {value: 6, type: "c", wildcard: false, img: "6_of_clubs.svg"},
+    {value: 7, type: "c", wildcard: false, img: "7_of_clubs.svg"},
+    {value: 8, type: "c", wildcard: false, img: "8_of_clubs.svg"},
+    {value: 9, type: "c", wildcard: false, img: "9_of_clubs.svg"},
+    {value: 10, type: "c", wildcard: false, img: "10_of_clubs.svg"},
+    {value: 11, type: "c", wildcard: false, img: "jack_of_clubs.svg"},
+    {value: 12, type: "c", wildcard: false, img: "queen_of_clubs.svg"},
+    {value: 13, type: "c", wildcard: false, img: "king_of_clubs.svg"},
+    {value: 1, type: "s", wildcard: false, img: "ace_of_spades.svg"},
+    {value: 2, type: "s", wildcard: false, img: "2_of_spades.svg"},
+    {value: 3, type: "s", wildcard: false, img: "3_of_spades.svg"},
+    {value: 4, type: "s", wildcard: false, img: "4_of_spades.svg"},
+    {value: 5, type: "s", wildcard: false, img: "5_of_spades.svg"},
+    {value: 6, type: "s", wildcard: false, img: "6_of_spades.svg"},
+    {value: 7, type: "s", wildcard: false, img: "7_of_spades.svg"},
+    {value: 8, type: "s", wildcard: false, img: "8_of_spades.svg"},
+    {value: 9, type: "s", wildcard: false, img: "9_of_spades.svg"},
+    {value: 10, type: "s", wildcard: false, img: "10_of_spades.svg"},
+    {value: 11, type: "s", wildcard: false, img: "jack_of_spades.svg"},
+    {value: 12, type: "s", wildcard: false, img: "queen_of_spades.svg"},
+    {value: 13, type: "s", wildcard: false, img: "king_of_spades.svg"},
+    {value: 0, type: "j", wildcard: true, img: "red_joker.svg"}
 ]
 
 function getRandomInt(min, max) 
@@ -118,9 +118,16 @@ function setupGame(IO, room, req)
             k = IO.sockets.connected[u[i]];
             if(k){
                 k.juego = {points: 0, chips: 2, hand: hand};
+                //Test Zone
+                k.juego.hand[0] = cards[6];
+                k.juego.hand[1] = cards[52];
+                k.juego.hand[2] = cards[8];
+                k.juego.hand[3] = cards[9];
+                k.juego.hand[4] = cards[0];
                 k.emit('set_player_cards', k.juego);
+                k.emit('player_data', k.juego);
             }                   
-        }
+        }        
         //Room Settings
         const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
@@ -137,6 +144,7 @@ function setupGame(IO, room, req)
             Room.settings.c_ronda = false;
             Room.settings.n_turn = 0;
             Room.settings.p_knock = null;
+            Room.settings.p_cantake = null;
             const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
             Room.settings.pivote = u[getRandomInt(0, u.length-1)];
             Room.settings.p_turn = Room.settings.pivote;       
@@ -163,6 +171,10 @@ function nextTurn(IO, room, socket, req)
         const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
         {
+            if(Room.settings.p_knock == next)
+            {
+                return endGame(IO, room, socket, req);
+            }
             Room.settings.p_turn = next;
             Room.settings.n_turn += 1;
             if(u.length == Room.settings.n_turn)
@@ -204,13 +216,170 @@ function swapCard(socket, data)
 
 function tocar(IO, room, req, socket)
 {
+    if(IO.sockets.adapter.rooms[room]){
+        const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+        const t = u.findIndex(p => p == socket.id)
+        let canTake = null;
+        if(t === 0){
+            canTake = u[u.length-1];
+        }
+        else{
+            canTake = u[t-1];
+        }
+
+        const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+        if(Room)
+        {
+            Room.settings.p_knock = socket.id;
+            Room.settings.p_cantake = canTake;
+            //Send
+            nextTurn(IO, room, socket, req);
+        }
+    }
+}
+
+function takeAll(IO, room, req, socket)
+{
     const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
-        Room.settings.p_knock = socket.id;
-        //Send
-        nextTurn(IO, room, socket, req);
+        const c_table = Room.settings.c_table;
+        const c_player = socket.juego.hand;
+        
+        Room.settings.c_table = c_player;
+        Room.settings.c_ronda = true;
+
+        socket.juego.hand = c_table;
+
+        socket.emit('set_player_cards', socket.juego);
+        IO.to(room).emit('room_data', Room.settings);
     }
+}
+
+function buyWidow(IO, room, socket, req)
+{
+    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {
+        const cost = 500;
+        if(socket.juego.points >= cost)
+        {
+            socket.juego.points -= 500;
+            socket.juego.chips += 1;
+            Room.settings.widows -= 1;
+        }       
+
+        socket.emit('player_data', socket.juego);
+        IO.to(room).emit('room_data', Room.settings);
+    }
+}
+
+function endGame(IO, room, socket, req)
+{
+    if(IO.sockets.adapter.rooms[room]){
+        const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+        const scores = [];
+        const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+        if(Room)
+        {
+            for(let i=0; i < u.length; i++)
+            {          
+                const k = IO.sockets.connected[u[i]];
+                if(k)
+                {
+                    const score = scoreHand(k.juego.hand, Room);
+                    console.log(score);
+                    k.juego.points += score;
+                    scores.push({id: u[i], score: score});
+                }                   
+            }
+        }
+    }
+}
+
+function scoreHand(hand, Room)
+{
+    return getOrderType(hand, Room)
+}
+
+function isComodin(card, Room)
+{
+    if(card.wildcard || card.value === Room.settings.j_jugados){return true}
+}
+
+function getOrderType(hand, Room)
+{
+    let r = 400;
+    let comodines = [];
+    for(let i=0; i < hand.length; i++)
+    {
+        if(isComodin(hand[i], Room))
+        {
+            hand[i].value = 100;
+            hand[i].wildcard = true;
+            comodines.push(i);
+        }
+    }
+
+    hand.sort((a, b) => {
+        return a.value - b.value;
+    });
+    
+    let v = hand[0];
+    let s = 0;
+    let k = v.value;
+    for(let i=1; i < hand.length; i++)
+    {
+        if(isComodin(hand[i], Room))
+        {
+            hand[i].value = k+i;
+        }
+        if(s >= 13 && hand[i].value < s)
+        {
+            k = hand[i].value;
+        }
+        s = hand[i].value;
+        if((k+i) !== hand[i].value)
+        {
+            if(comodines.length > 0)
+            {
+                const w = comodines.pop();
+                hand[w].value = k+i;
+                hand.swap(i, w);
+            }
+            else
+            {
+                r = 0;
+                break;
+            }         
+        }
+    }
+    console.log(hand);
+    if(r > 0)
+    {      
+        for(let i=0; i < hand.length; i++)
+        {
+            if(isComodin(hand[i], Room))
+            {
+                hand[i].type = v.type;
+            }
+        }
+        console.log(hand);
+        if(!hand.find(c => c.type !== v.type))
+        {
+            r += 500;
+            if(v.value === 10)
+            {
+                r += 100;
+            }
+        }
+    }
+    return r
+}
+
+function getRepetedType()
+{
+
 }
 
 router.get('/room', (req, res) => {
@@ -304,11 +473,25 @@ router.get('/room', (req, res) => {
         socket.on('pick', data => {
             pickCard(IO, room, socket, req, data);
         });
+        socket.on('take_all', () => {
+            takeAll(IO, room, req, socket)
+        });
         socket.on('swap_card', data => {
             swapCard(socket, data);
-        });    
+        }); 
+        socket.on('viuda_b', () => {
+            buyWidow(IO, room, socket, req)
+        });   
     });
     res.render('links/room', {room_id: room});
 });
+
+Array.prototype.swap = function (x,y) 
+{
+    var b = this[x];
+    this[x] = this[y];
+    this[y] = b;
+    return this;
+}
 
 module.exports = router;
