@@ -71,8 +71,24 @@ footer {
   cursor: pointer;
 }
 
+#c_table {
+  height: 300px;
+}
+
+#c_player {
+  height: 300px;
+}
+
 @media only screen and (max-width: 750px) {
   #board img {
     width: 500px;
+  }
+
+  #c_table {
+    height: 150px;
+  }
+
+  #c_player {
+    height: 150px;
   }
 }

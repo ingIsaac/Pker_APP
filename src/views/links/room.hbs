@@ -2,7 +2,7 @@
     <div class="d-flex" id="wrapper">
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
-      <div class="sidebar-heading">Jugadores</div>
+      <div class="sidebar-heading"><h4>Jugadores</h4></div>
       <ul class="list-group" id="players"></ul>
     </div>
     <!-- /#sidebar-wrapper -->
@@ -10,20 +10,21 @@
     <div>
       <nav class="navbar navbar-expand-lg navbar-light">
         <button class="btn btn-primary" id="menu-toggle">Toggle</button>
-        <div style="margin-left: 2em;">
-          <p id="p_name"></p>
+        <div style="margin-left: 1em; width: 100%; border-bottom: 1px solid black;">
+          <h6 id="p_name" style="float: right;"></h6>
         </div>
-      </nav>     
+      </nav>
       <div class="container-fluid">
-        <div id="board" style="text-align:center; margin-top: 1em;">
+        <div id="board" style="text-align:center;">
           <div id="c_table" style="display: inline-flex;"></div>
-          <hr>
           <div id="c_player" style="display: inline-flex;"></div>
         </div>
-        <div style="margin-top: 2em;">           
-          <button style="margin: 0.5em;" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal">Cambiar Nombre</button>                        
+        <div style="margin-top: 2em;">
+          <button style="margin: 0.5em;" class="btn btn-info btn-block" id="init">Iniciar Partida</button>
           <button style="margin: 0.5em;" class="btn btn-info btn-block" id="end_turn">Terminar Turno</button>
-          <button style="margin: 0.5em;" class="btn btn-info btn-block" id="init">Iniciar Partida</button>                                
+          <button style="margin: 0.5em;" class="btn btn-danger btn-block" id="tocar">Tocar</button>
+          <hr>                              
+          <button style="margin: 0.5em;" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal">Cambiar Nombre</button>                        
         </div>
       </div>
     </div>
@@ -58,37 +59,18 @@
       {
           $('#c_table').append('<div class="col-sm" style="padding-right: 0.2em; padding-top: 0;"><img src="/pics/cards/card_back.svg" style="width: 100%; height: 100%;"></div>');
           $('#c_player').append('<div class="col-sm" style="padding-right: 0.2em; padding-bottom: 0;"><img src="/pics/cards/card_back.svg" style="width: 100%; height: 100%;"></div>');
-      }           
-    }
-
-    let p_card;
-    let t_card;
-
-    function selectPlayerCard(e)
-    {
-      if(p_card === $(e).attr('id'))
-      {
-        $(e).css({"padding-bottom": "0"});
-        p_card = '';
-        return
       }
-      $('#c_player').children().css({"padding-bottom": "0"});
-      $(e).css({"padding-bottom": "2em"});
-      p_card = $(e).attr('id');      
+      //-->
+      $('#init').show();
+      $('#end_turn').hide();
+      $('#tocar').hide();      
     }
 
-    function selectTableCard(e)
-    {
-      if(t_card === $(e).attr('id'))
-      {
-        $(e).css({"padding-top": "0"});
-        t_card = '';
-        return
-      }
-      $('#c_table').children().css({"padding-top": "0"});
-      $(e).css({"padding-top": "2em"});
-      t_card = $(e).attr('id');
+    let pick = {
+      p_card: '',
+      t_card: ''
     }
+    let disable = false;
 
     $(function (){
         ///Fontend Settings ->>
@@ -111,6 +93,73 @@
 
         //WebSockets
         const socket = io();
+
+        //Pick a Card
+        $.fn.selectPlayerCard = function (e)
+        {
+          if(disable){return}
+          if(pick.p_card === $(e).attr('id'))
+          {
+            $(e).css({"padding-bottom": "0"});
+            pick.p_card = '';
+            return
+          }
+          $('#c_player').children().css({"padding-bottom": "0"});
+          $(e).css({"padding-bottom": "2em"});
+          pick.p_card = $(e).attr('id');   
+          //Send
+          if(pick.p_card !== '' && pick.t_card !== '')
+          {
+            socket.emit('pick', pick);
+            pick.p_card = '';
+            pick.t_card = '';
+            disable = true;
+          }
+        }
+
+        $.fn.selectTableCard = function (e)
+        {
+          if(disable){return}
+          if(pick.t_card === $(e).attr('id'))
+          {
+            $(e).css({"padding-top": "0"});
+            pick.t_card = '';
+            return
+          }
+          $('#c_table').children().css({"padding-top": "0"});
+          $(e).css({"padding-top": "2em"});
+          pick.t_card = $(e).attr('id');
+          //Send
+          //Send
+          if(pick.p_card !== '' && pick.t_card !== '')
+          {
+            socket.emit('pick', pick);
+            pick.p_card = '';
+            pick.t_card = '';
+            disable = true;
+          }
+        }
+
+        $.fn.dragStart = function (e)
+        {
+          e.dataTransfer.setData("Text", e.target.parentElement.id);
+        }
+
+        $.fn.allowDrop = function (e)
+        {
+          e.preventDefault();
+        }
+
+        $.fn.drop = function (e)
+        {
+          e.preventDefault();
+          const n = e.dataTransfer.getData("Text");
+          if(!n){return}
+          const p = e.target.parentElement.id;
+          if(!p){return}         
+          socket.emit('swap_card', {new_card: n, prev_card: p})      
+        }
+
         //Get Status
         socket.on('connected', (data) => {
             toastr.success(data);
@@ -138,14 +187,23 @@
                 {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].id + '</li>');}
             }           
         });
-        socket.on('init', (data) => {
+        socket.on('init', () => {
+            //Disable Init button
+            $('#init').hide();       
+        });
+        socket.on('set_player_cards', (data) => {
             $('#c_player').empty();
             for(let i=0; i < data.hand.length; i++)
             {
-                $('#c_player').append('<div class="col-sm" id="' + (data.hand[i].value + data.hand[i].type) + '" style="padding-right: 0.2em; padding-bottom: 0;" onClick="selectPlayerCard(this);"><img src="/pics/cards/' + data.hand[i].img + '" style="width: 100%; height: 100%;"></div>');
+                $('#c_player').append('<div class="col-sm" id="' + (data.hand[i].value + data.hand[i].type) + '" style="padding-right: 0.2em; padding-bottom: 0;" onClick="$(this).selectPlayerCard(this);"><img src="/pics/cards/' + data.hand[i].img + '" style="width: 100%; height: 100%;" ondragstart="$(this).dragStart(event);" ondrop="$(this).drop(event);" ondragover="$(this).allowDrop(event);" draggable="true"></div>');
             }
-            //Disable Init button
-            $('#init').hide();       
+        });
+        socket.on('set_table_cards', (data) => {
+            $('#c_table').empty();
+            for(let i=0; i < data.c_table.length; i++)
+            {
+                $('#c_table').append('<div class="col-sm" id="' + (data.c_table[i].value + data.c_table[i].type) + '" style="padding-right: 0.2em; padding-top: 0;" onClick="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');
+            }  
         });
         socket.on('room_data', (data) => {
             if(data)
@@ -156,23 +214,33 @@
                 $('#c_table').empty();
                 for(let i=0; i < data.c_table.length; i++)
                 {
-                    $('#c_table').append('<div class="col-sm" id="' + (data.c_table[i].value + data.c_table[i].type) + '" style="padding-right: 0.2em; padding-top: 0;" onClick="selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');
-                }                  
+                    $('#c_table').append('<div class="col-sm" id="' + (data.c_table[i].value + data.c_table[i].type) + '" style="padding-right: 0.2em; padding-top: 0;" onClick="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');
+                } 
               }
 
               //Set Turn Display
               $('#players').children().css('background', '#ffffff');
-              $('#'+ data.p_turn).css('background','#8ec252');
+              $('#'+ data.p_turn).css('background','#C1C1FB');
               if(socket.id == data.p_turn)
               {
                 toastr.info($('#p_name').text(), 'Es tu Turno:');
+                disable = false;
                 //Enable End_Turn button
                 $('#end_turn').show();
+                if(data.c_ronda){$('#tocar').show();}
               }
-              else{$('#end_turn').hide();}
+              else{$('#end_turn').hide();$('#tocar').hide();}
 
               //Get Game State
-              
+              if(data.p_knock)
+              {
+                $('#tocar').hide();
+                $('#'+ data.p_knock).css('background','#FF0000');
+                if(socket.id !== data.p_knock)
+                {
+                  toastr.error($('#p_name').text(), 'Ah tocado! Te queda solo un turno.');
+                }
+              }
             }
         });
         //Send Data
@@ -181,6 +249,9 @@
         });
         $('#end_turn').on('click', () => {
             socket.emit('end_turn');
+        });
+        $('#tocar').on('click', () => {
+            socket.emit('tocar');
         });
         $('#nombre').on('click', () => {
             $('#modal').modal('hide');

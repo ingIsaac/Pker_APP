@@ -1,6 +1,60 @@
 const express = require('express');
 const router = express.Router();
-const uid = require('uid');
+const cards = [
+    {value: 1, type: "h", img: "ace_of_hearts.svg"},
+    {value: 2, type: "h", img: "2_of_hearts.svg"},
+    {value: 3, type: "h", img: "3_of_hearts.svg"},
+    {value: 4, type: "h", img: "4_of_hearts.svg"},
+    {value: 5, type: "h", img: "5_of_hearts.svg"},
+    {value: 6, type: "h", img: "6_of_hearts.svg"},
+    {value: 7, type: "h", img: "7_of_hearts.svg"},
+    {value: 8, type: "h", img: "8_of_hearts.svg"},
+    {value: 9, type: "h", img: "9_of_hearts.svg"},
+    {value: 10, type: "h", img: "10_of_hearts.svg"},
+    {value: 11, type: "h", img: "jack_of_hearts.svg"},
+    {value: 12, type: "h", img: "queen_of_hearts.svg"},
+    {value: 13, type: "h", img: "king_of_hearts.svg"},
+    {value: 1, type: "d", img: "ace_of_diamonds.svg"},
+    {value: 2, type: "d", img: "2_of_diamonds.svg"},
+    {value: 3, type: "d", img: "3_of_diamonds.svg"},
+    {value: 4, type: "d", img: "4_of_diamonds.svg"},
+    {value: 5, type: "d", img: "5_of_diamonds.svg"},
+    {value: 6, type: "d", img: "6_of_diamonds.svg"},
+    {value: 7, type: "d", img: "7_of_diamonds.svg"},
+    {value: 8, type: "d", img: "8_of_diamonds.svg"},
+    {value: 9, type: "d", img: "9_of_diamonds.svg"},
+    {value: 10, type: "d", img: "10_of_diamonds.svg"},
+    {value: 11, type: "d", img: "jack_of_diamonds.svg"},
+    {value: 12, type: "d", img: "queen_of_diamonds.svg"},
+    {value: 13, type: "d", img: "king_of_diamonds.svg"},
+    {value: 1, type: "c", img: "ace_of_clubs.svg"},
+    {value: 2, type: "c", img: "2_of_clubs.svg"},
+    {value: 3, type: "c", img: "3_of_clubs.svg"},
+    {value: 4, type: "c", img: "4_of_clubs.svg"},
+    {value: 5, type: "c", img: "5_of_clubs.svg"},
+    {value: 6, type: "c", img: "6_of_clubs.svg"},
+    {value: 7, type: "c", img: "7_of_clubs.svg"},
+    {value: 8, type: "c", img: "8_of_clubs.svg"},
+    {value: 9, type: "c", img: "9_of_clubs.svg"},
+    {value: 10, type: "c", img: "10_of_clubs.svg"},
+    {value: 11, type: "c", img: "jack_of_clubs.svg"},
+    {value: 12, type: "c", img: "queen_of_clubs.svg"},
+    {value: 13, type: "c", img: "king_of_clubs.svg"},
+    {value: 1, type: "s", img: "ace_of_spades.svg"},
+    {value: 2, type: "s", img: "2_of_spades.svg"},
+    {value: 3, type: "s", img: "3_of_spades.svg"},
+    {value: 4, type: "s", img: "4_of_spades.svg"},
+    {value: 5, type: "s", img: "5_of_spades.svg"},
+    {value: 6, type: "s", img: "6_of_spades.svg"},
+    {value: 7, type: "s", img: "7_of_spades.svg"},
+    {value: 8, type: "s", img: "8_of_spades.svg"},
+    {value: 9, type: "s", img: "9_of_spades.svg"},
+    {value: 10, type: "s", img: "10_of_spades.svg"},
+    {value: 11, type: "s", img: "jack_of_spades.svg"},
+    {value: 12, type: "s", img: "queen_of_spades.svg"},
+    {value: 13, type: "s", img: "king_of_spades.svg"},
+    {value: 0, type: "j", img: "red_joker.svg"}
+]
 
 function getRandomInt(min, max) 
 {
@@ -35,63 +89,7 @@ function sendPlayerList(IO, room)
 }
 
 function setupGame(IO, room, req)
-{
-    const cards = [
-        {value: 1, type: "h", img: "ace_of_hearts.svg"},
-        {value: 2, type: "h", img: "2_of_hearts.svg"},
-        {value: 3, type: "h", img: "3_of_hearts.svg"},
-        {value: 4, type: "h", img: "4_of_hearts.svg"},
-        {value: 5, type: "h", img: "5_of_hearts.svg"},
-        {value: 6, type: "h", img: "6_of_hearts.svg"},
-        {value: 7, type: "h", img: "7_of_hearts.svg"},
-        {value: 8, type: "h", img: "8_of_hearts.svg"},
-        {value: 9, type: "h", img: "9_of_hearts.svg"},
-        {value: 10, type: "h", img: "10_of_hearts.svg"},
-        {value: 11, type: "h", img: "jack_of_hearts.svg"},
-        {value: 12, type: "h", img: "queen_of_hearts.svg"},
-        {value: 13, type: "h", img: "king_of_hearts.svg"},
-        {value: 1, type: "d", img: "ace_of_diamonds.svg"},
-        {value: 2, type: "d", img: "2_of_diamonds.svg"},
-        {value: 3, type: "d", img: "3_of_diamonds.svg"},
-        {value: 4, type: "d", img: "4_of_diamonds.svg"},
-        {value: 5, type: "d", img: "5_of_diamonds.svg"},
-        {value: 6, type: "d", img: "6_of_diamonds.svg"},
-        {value: 7, type: "d", img: "7_of_diamonds.svg"},
-        {value: 8, type: "d", img: "8_of_diamonds.svg"},
-        {value: 9, type: "d", img: "9_of_diamonds.svg"},
-        {value: 10, type: "d", img: "10_of_diamonds.svg"},
-        {value: 11, type: "d", img: "jack_of_diamonds.svg"},
-        {value: 12, type: "d", img: "queen_of_diamonds.svg"},
-        {value: 13, type: "d", img: "king_of_diamonds.svg"},
-        {value: 1, type: "c", img: "ace_of_clubs.svg"},
-        {value: 2, type: "c", img: "2_of_clubs.svg"},
-        {value: 3, type: "c", img: "3_of_clubs.svg"},
-        {value: 4, type: "c", img: "4_of_clubs.svg"},
-        {value: 5, type: "c", img: "5_of_clubs.svg"},
-        {value: 6, type: "c", img: "6_of_clubs.svg"},
-        {value: 7, type: "c", img: "7_of_clubs.svg"},
-        {value: 8, type: "c", img: "8_of_clubs.svg"},
-        {value: 9, type: "c", img: "9_of_clubs.svg"},
-        {value: 10, type: "c", img: "10_of_clubs.svg"},
-        {value: 11, type: "c", img: "jack_of_clubs.svg"},
-        {value: 12, type: "c", img: "queen_of_clubs.svg"},
-        {value: 13, type: "c", img: "king_of_clubs.svg"},
-        {value: 1, type: "s", img: "ace_of_spades.svg"},
-        {value: 2, type: "s", img: "2_of_spades.svg"},
-        {value: 3, type: "s", img: "3_of_spades.svg"},
-        {value: 4, type: "s", img: "4_of_spades.svg"},
-        {value: 5, type: "s", img: "5_of_spades.svg"},
-        {value: 6, type: "s", img: "6_of_spades.svg"},
-        {value: 7, type: "s", img: "7_of_spades.svg"},
-        {value: 8, type: "s", img: "8_of_spades.svg"},
-        {value: 9, type: "s", img: "9_of_spades.svg"},
-        {value: 10, type: "s", img: "10_of_spades.svg"},
-        {value: 11, type: "s", img: "jack_of_spades.svg"},
-        {value: 12, type: "s", img: "queen_of_spades.svg"},
-        {value: 13, type: "s", img: "king_of_spades.svg"},
-        {value: 0, type: "j", img: "red_joker.svg"}
-    ]
-    
+{   
     let deck = []
     let player_count = 0
 
@@ -100,7 +98,7 @@ function setupGame(IO, room, req)
     while(deck.length < ((player_count*5) + 5))
     {
         const _c = cards[getRandomInt(0,52)]
-        const t = deck.find(c => {return (c.value+c.type) === (_c.value+_c.type)})
+        const t = deck.find(c => (c.value+c.type) === (_c.value+_c.type))
         if(!t)
         {
             deck.push(_c);
@@ -120,7 +118,7 @@ function setupGame(IO, room, req)
             k = IO.sockets.connected[u[i]];
             if(k){
                 k.juego = {points: 0, chips: 2, hand: hand};
-                k.emit('init', k.juego);
+                k.emit('set_player_cards', k.juego);
             }                   
         }
         //Room Settings
@@ -131,7 +129,7 @@ function setupGame(IO, room, req)
             Room.settings.available = false;
             //Set table Cards
             Room.settings.c_table = [];
-            for(let i=((player_count*5)-1); i < (((player_count*5)-1)+5); i++)
+            for(let i=(player_count*5); i < ((player_count*5)+5); i++)
             {
                 Room.settings.c_table.push(deck[i]);                
             }
@@ -144,6 +142,7 @@ function setupGame(IO, room, req)
             Room.settings.p_turn = Room.settings.pivote;       
             //Send Data
             IO.to(room).emit('room_data', Room.settings);
+            IO.to(room).emit('init');
         }
     }
 }
@@ -172,6 +171,45 @@ function nextTurn(IO, room, socket, req)
             }
             IO.to(room).emit('room_data', Room.settings);
         }
+    }
+}
+
+function pickCard(IO, room, socket, req, data)
+{
+    //Set Card Table => Player
+    const v = socket.juego.hand.findIndex(c => (c.value + c.type) === data.p_card);
+    socket.juego.hand[v] = cards.find(c => (c.value + c.type) === data.t_card);
+    //Send
+    socket.emit('set_player_cards', socket.juego);
+
+    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {
+        //Set Card Player => Table
+        const _v = Room.settings.c_table.findIndex(c => (c.value + c.type) === data.t_card);
+        Room.settings.c_table[_v] = cards.find(c => (c.value + c.type) === data.p_card);
+        //Send
+        IO.to(room).emit('set_table_cards', Room.settings);
+    }
+}
+
+function swapCard(socket, data)
+{
+    const p = socket.juego.hand.findIndex(c => (c.value + c.type) === data.prev_card);
+    const n = socket.juego.hand.findIndex(c => (c.value + c.type) === data.new_card);
+    socket.juego.hand[n] = cards.find(c => (c.value + c.type) === data.prev_card);
+    socket.juego.hand[p] = cards.find(c => (c.value + c.type) === data.new_card);
+    socket.emit('set_player_cards', socket.juego);
+}
+
+function tocar(IO, room, req, socket)
+{
+    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {
+        Room.settings.p_knock = socket.id;
+        //Send
+        nextTurn(IO, room, socket, req);
     }
 }
 
@@ -244,6 +282,8 @@ router.get('/room', (req, res) => {
             IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
             //Send List of Players
             sendPlayerList(IO, room)
+            //Set Next Turn
+            nextTurn(IO, room, socket, req)
         }) 
         
         //Get Data
@@ -255,12 +295,18 @@ router.get('/room', (req, res) => {
             //Send List of Players
             sendPlayerList(IO, room)
         });
-        socket.on('end_turn', data => {
+        socket.on('end_turn', () => {
             nextTurn(IO, room, socket, req);
         });
-
-        //Send Data
-        
+        socket.on('tocar', () => {
+            tocar(IO, room, req, socket)
+        });
+        socket.on('pick', data => {
+            pickCard(IO, room, socket, req, data);
+        });
+        socket.on('swap_card', data => {
+            swapCard(socket, data);
+        });    
     });
     res.render('links/room', {room_id: room});
 });
