@@ -1,59 +1,59 @@
 const express = require('express');
 const router = express.Router();
 const cards = [
-    {value: 1, type: "h", wildcard: false, img: "ace_of_hearts.svg"},
-    {value: 2, type: "h", wildcard: false, img: "2_of_hearts.svg"},
-    {value: 3, type: "h", wildcard: false, img: "3_of_hearts.svg"},
-    {value: 4, type: "h", wildcard: false, img: "4_of_hearts.svg"},
-    {value: 5, type: "h", wildcard: false, img: "5_of_hearts.svg"},
-    {value: 6, type: "h", wildcard: false, img: "6_of_hearts.svg"},
-    {value: 7, type: "h", wildcard: false, img: "7_of_hearts.svg"},
-    {value: 8, type: "h", wildcard: false, img: "8_of_hearts.svg"},
-    {value: 9, type: "h", wildcard: false, img: "9_of_hearts.svg"},
-    {value: 10, type: "h", wildcard: false, img: "10_of_hearts.svg"},
-    {value: 11, type: "h", wildcard: false, img: "jack_of_hearts.svg"},
-    {value: 12, type: "h", wildcard: false, img: "queen_of_hearts.svg"},
-    {value: 13, type: "h", wildcard: false, img: "king_of_hearts.svg"},
-    {value: 1, type: "d", wildcard: false, img: "ace_of_diamonds.svg"},
-    {value: 2, type: "d", wildcard: false, img: "2_of_diamonds.svg"},
-    {value: 3, type: "d", wildcard: false, img: "3_of_diamonds.svg"},
-    {value: 4, type: "d", wildcard: false, img: "4_of_diamonds.svg"},
-    {value: 5, type: "d", wildcard: false, img: "5_of_diamonds.svg"},
-    {value: 6, type: "d", wildcard: false, img: "6_of_diamonds.svg"},
-    {value: 7, type: "d", wildcard: false, img: "7_of_diamonds.svg"},
-    {value: 8, type: "d", wildcard: false, img: "8_of_diamonds.svg"},
-    {value: 9, type: "d", wildcard: false, img: "9_of_diamonds.svg"},
-    {value: 10, type: "d", wildcard: false, img: "10_of_diamonds.svg"},
-    {value: 11, type: "d", wildcard: false, img: "jack_of_diamonds.svg"},
-    {value: 12, type: "d", wildcard: false, img: "queen_of_diamonds.svg"},
-    {value: 13, type: "d", wildcard: false, img: "king_of_diamonds.svg"},
-    {value: 1, type: "c", wildcard: false, img: "ace_of_clubs.svg"},
-    {value: 2, type: "c", wildcard: false, img: "2_of_clubs.svg"},
-    {value: 3, type: "c", wildcard: false, img: "3_of_clubs.svg"},
-    {value: 4, type: "c", wildcard: false, img: "4_of_clubs.svg"},
-    {value: 5, type: "c", wildcard: false, img: "5_of_clubs.svg"},
-    {value: 6, type: "c", wildcard: false, img: "6_of_clubs.svg"},
-    {value: 7, type: "c", wildcard: false, img: "7_of_clubs.svg"},
-    {value: 8, type: "c", wildcard: false, img: "8_of_clubs.svg"},
-    {value: 9, type: "c", wildcard: false, img: "9_of_clubs.svg"},
-    {value: 10, type: "c", wildcard: false, img: "10_of_clubs.svg"},
-    {value: 11, type: "c", wildcard: false, img: "jack_of_clubs.svg"},
-    {value: 12, type: "c", wildcard: false, img: "queen_of_clubs.svg"},
-    {value: 13, type: "c", wildcard: false, img: "king_of_clubs.svg"},
-    {value: 1, type: "s", wildcard: false, img: "ace_of_spades.svg"},
-    {value: 2, type: "s", wildcard: false, img: "2_of_spades.svg"},
-    {value: 3, type: "s", wildcard: false, img: "3_of_spades.svg"},
-    {value: 4, type: "s", wildcard: false, img: "4_of_spades.svg"},
-    {value: 5, type: "s", wildcard: false, img: "5_of_spades.svg"},
-    {value: 6, type: "s", wildcard: false, img: "6_of_spades.svg"},
-    {value: 7, type: "s", wildcard: false, img: "7_of_spades.svg"},
-    {value: 8, type: "s", wildcard: false, img: "8_of_spades.svg"},
-    {value: 9, type: "s", wildcard: false, img: "9_of_spades.svg"},
-    {value: 10, type: "s", wildcard: false, img: "10_of_spades.svg"},
-    {value: 11, type: "s", wildcard: false, img: "jack_of_spades.svg"},
-    {value: 12, type: "s", wildcard: false, img: "queen_of_spades.svg"},
-    {value: 13, type: "s", wildcard: false, img: "king_of_spades.svg"},
-    {value: 0, type: "j", wildcard: true, img: "red_joker.svg"}
+    {value: 14, type: "h", wildcard_value: 1, type_value: 30, img: "ace_of_hearts.svg"},
+    {value: 2, type: "h", wildcard_value: 2, type_value: 30, img: "2_of_hearts.svg"},
+    {value: 3, type: "h", wildcard_value: 3, type_value: 30, img: "3_of_hearts.svg"},
+    {value: 4, type: "h", wildcard_value: 4, type_value: 30, img: "4_of_hearts.svg"},
+    {value: 5, type: "h", wildcard_value: 5, type_value: 30, img: "5_of_hearts.svg"},
+    {value: 6, type: "h", wildcard_value: 6, type_value: 30, img: "6_of_hearts.svg"},
+    {value: 7, type: "h", wildcard_value: 7, type_value: 30, img: "7_of_hearts.svg"},
+    {value: 8, type: "h", wildcard_value: 8, type_value: 30, img: "8_of_hearts.svg"},
+    {value: 9, type: "h", wildcard_value: 9, type_value: 30, img: "9_of_hearts.svg"},
+    {value: 10, type: "h", wildcard_value: 10, type_value: 30, img: "10_of_hearts.svg"},
+    {value: 11, type: "h", wildcard_value: 11, type_value: 30, img: "jack_of_hearts.svg"},
+    {value: 12, type: "h", wildcard_value: 12, type_value: 30, img: "queen_of_hearts.svg"},
+    {value: 13, type: "h", wildcard_value: 13, type_value: 30, img: "king_of_hearts.svg"},
+    {value: 14, type: "d", wildcard_value: 1, type_value: 10, img: "ace_of_diamonds.svg"},
+    {value: 2, type: "d", wildcard_value: 2, type_value: 10, img: "2_of_diamonds.svg"},
+    {value: 3, type: "d", wildcard_value: 3, type_value: 10, img: "3_of_diamonds.svg"},
+    {value: 4, type: "d", wildcard_value: 4, type_value: 10, img: "4_of_diamonds.svg"},
+    {value: 5, type: "d", wildcard_value: 5, type_value: 10, img: "5_of_diamonds.svg"},
+    {value: 6, type: "d", wildcard_value: 6, type_value: 10, img: "6_of_diamonds.svg"},
+    {value: 7, type: "d", wildcard_value: 7, type_value: 10, img: "7_of_diamonds.svg"},
+    {value: 8, type: "d", wildcard_value: 8, type_value: 10, img: "8_of_diamonds.svg"},
+    {value: 9, type: "d", wildcard_value: 9, type_value: 10, img: "9_of_diamonds.svg"},
+    {value: 10, type: "d", wildcard_value: 10, type_value: 10, img: "10_of_diamonds.svg"},
+    {value: 11, type: "d", wildcard_value: 11, type_value: 10, img: "jack_of_diamonds.svg"},
+    {value: 12, type: "d", wildcard_value: 12, type_value: 10, img: "queen_of_diamonds.svg"},
+    {value: 13, type: "d", wildcard_value: 13, type_value: 10, img: "king_of_diamonds.svg"},
+    {value: 14, type: "c", wildcard_value: 1, type_value: 20, img: "ace_of_clubs.svg"},
+    {value: 2, type: "c", wildcard_value: 2, type_value: 20, img: "2_of_clubs.svg"},
+    {value: 3, type: "c", wildcard_value: 3, type_value: 20, img: "3_of_clubs.svg"},
+    {value: 4, type: "c", wildcard_value: 4, type_value: 20, img: "4_of_clubs.svg"},
+    {value: 5, type: "c", wildcard_value: 5, type_value: 20, img: "5_of_clubs.svg"},
+    {value: 6, type: "c", wildcard_value: 6, type_value: 20, img: "6_of_clubs.svg"},
+    {value: 7, type: "c", wildcard_value: 7, type_value: 20, img: "7_of_clubs.svg"},
+    {value: 8, type: "c", wildcard_value: 8, type_value: 20, img: "8_of_clubs.svg"},
+    {value: 9, type: "c", wildcard_value: 9, type_value: 20, img: "9_of_clubs.svg"},
+    {value: 10, type: "c", wildcard_value: 10, type_value: 20, img: "10_of_clubs.svg"},
+    {value: 11, type: "c", wildcard_value: 11, type_value: 20, img: "jack_of_clubs.svg"},
+    {value: 12, type: "c", wildcard_value: 12, type_value: 20, img: "queen_of_clubs.svg"},
+    {value: 13, type: "c", wildcard_value: 13, type_value: 20, img: "king_of_clubs.svg"},
+    {value: 14, type: "s", wildcard_value: 1, type_value: 40, img: "ace_of_spades.svg"},
+    {value: 2, type: "s", wildcard_value: 2, type_value: 40, img: "2_of_spades.svg"},
+    {value: 3, type: "s", wildcard_value: 3, type_value: 40, img: "3_of_spades.svg"},
+    {value: 4, type: "s", wildcard_value: 4, type_value: 40, img: "4_of_spades.svg"},
+    {value: 5, type: "s", wildcard_value: 5, type_value: 40, img: "5_of_spades.svg"},
+    {value: 6, type: "s", wildcard_value: 6, type_value: 40, img: "6_of_spades.svg"},
+    {value: 7, type: "s", wildcard_value: 7, type_value: 40, img: "7_of_spades.svg"},
+    {value: 8, type: "s", wildcard_value: 8, type_value: 40, img: "8_of_spades.svg"},
+    {value: 9, type: "s", wildcard_value: 9, type_value: 40, img: "9_of_spades.svg"},
+    {value: 10, type: "s", wildcard_value: 10, type_value: 40, img: "10_of_spades.svg"},
+    {value: 11, type: "s", wildcard_value: 11, type_value: 40, img: "jack_of_spades.svg"},
+    {value: 12, type: "s", wildcard_value: 12, type_value: 40, img: "queen_of_spades.svg"},
+    {value: 13, type: "s", wildcard_value: 13, type_value: 40, img: "king_of_spades.svg"},
+    {value: 0, type: "j", wildcard_value: 0, type_value: 0, img: "red_joker.svg"}
 ]
 
 function getRandomInt(min, max) 
@@ -118,12 +118,6 @@ function setupGame(IO, room, req)
             k = IO.sockets.connected[u[i]];
             if(k){
                 k.juego = {points: 0, chips: 2, hand: hand};
-                //Test Zone
-                k.juego.hand[0] = cards[6];
-                k.juego.hand[1] = cards[52];
-                k.juego.hand[2] = cards[8];
-                k.juego.hand[3] = cards[9];
-                k.juego.hand[4] = cards[0];
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -299,87 +293,227 @@ function endGame(IO, room, socket, req)
 
 function scoreHand(hand, Room)
 {
-    return getOrderType(hand, Room)
+    const orderType = getOrderType(hand, Room);
+    const repetedType = getRepetedType(hand, Room);
+    if(orderType > 0)
+    {
+        return orderType;
+    }
+    else if(repetedType > 0)
+    {
+        return repetedType;
+    }
+
+    return 0;
 }
 
 function isComodin(card, Room)
 {
-    if(card.wildcard || card.value === Room.settings.j_jugados){return true}
+    if(card.value === 0 || card.wildcard_value === Room.settings.j_jugados){return true}
 }
 
 function getOrderType(hand, Room)
 {
-    let r = 400;
-    let comodines = [];
-    for(let i=0; i < hand.length; i++)
-    {
-        if(isComodin(hand[i], Room))
-        {
-            hand[i].value = 100;
-            hand[i].wildcard = true;
-            comodines.push(i);
-        }
-    }
-
-    hand.sort((a, b) => {
-        return a.value - b.value;
-    });
-    
+    let r = 400;      
     let v = hand[0];
     let s = 0;
+    let q = 0;
     let k = v.value;
-    for(let i=1; i < hand.length; i++)
-    {
-        if(isComodin(hand[i], Room))
-        {
-            hand[i].value = k+i;
-        }
-        if(s >= 13 && hand[i].value < s)
+    for(let i=0; i < hand.length; i++)
+    {       
+        if(s >= 14 && hand[i].value < s)
         {
             k = hand[i].value;
         }
         s = hand[i].value;
-        if((k+i) !== hand[i].value)
+        if(hand[i].value !== (k+i))
         {
-            if(comodines.length > 0)
-            {
-                const w = comodines.pop();
-                hand[w].value = k+i;
-                hand.swap(i, w);
-            }
-            else
+            if(!isComodin(hand[i], Room))
             {
                 r = 0;
                 break;
+            }
+            else
+            {
+                q = (k+i);
             }         
         }
-    }
-    console.log(hand);
+        else
+        {
+            q = hand[i].value;
+        }
+    }    
     if(r > 0)
     {      
+        r += q;
         for(let i=0; i < hand.length; i++)
         {
             if(isComodin(hand[i], Room))
             {
                 hand[i].type = v.type;
+                hand[i].type_value = v.type_value;
+                r += hand[i].type_value;
             }
         }
-        console.log(hand);
         if(!hand.find(c => c.type !== v.type))
         {
             r += 500;
             if(v.value === 10)
             {
-                r += 100;
+                r += 1000;
             }
         }
     }
     return r
 }
 
-function getRepetedType()
+function getRepetedType(hand, Room)
 {
-
+    let r = 100;
+    let t = 1;
+    let u = null;
+    let n = [];
+    let _hand = hand;
+    for(let i=0; i < _hand.length; i++)
+    {
+        if(u !== null)
+        {
+            console.log(_hand[i]);
+            if(u.value === _hand[i].value || isComodin(_hand[i], Room))
+            {
+                t++;
+                if(isComodin(_hand[i], Room))
+                {
+                    _hand[i].value = u.value;
+                    _hand[i].type = u.type;
+                    _hand[i].type_value = u.type_value;
+                }
+                if(i === _hand.length-1)
+                {
+                    if(t > 1)
+                    {
+                        n.push({c: _hand[i-1], t: t})
+                    }   
+                }
+            }
+            else
+            {        
+                if(t > 1)
+                {
+                    n.push({c: _hand[i-1], t: t})
+                }              
+                t = 1;
+            }
+        }
+        else
+        {
+            if(isComodin(_hand[i], Room))
+            {
+                for(let v=0; v < _hand.length; v++)
+                {
+                    if(!isComodin(_hand[v], Room))
+                    {
+                        _hand[i].value = _hand[v].value;
+                        _hand[i].type = _hand[v].type;
+                        _hand[i].type_value = _hand[v].type_value;
+                    }
+                }               
+            }
+        }
+        u = _hand[i];
+    }
+    console.log(n);
+    if(n.length == 1)
+    {
+        if(n[0].t == 5)
+        {
+            r += ((r*10) + ((n[0].c.value+n[0].c.type_value) * n[0].t));        
+        }
+        else if(n[0].t == 4)
+        {
+            r += ((r*8) + ((n[0].c.value+n[0].c.type_value) * n[0].t)); 
+        }
+        else if(n[0].t == 3)
+        {
+            r += ((r*3) + ((n[0].c.value+n[0].c.type_value) * n[0].t)); 
+        }
+        else if(n[0].t == 2)
+        {
+            r += ((r*1) + ((n[0].c.value+n[0].c.type_value) * n[0].t)); 
+        }
+        else
+        {
+            r = 0;
+        }
+    }
+    else if(n.length == 2)
+    {
+        if(n[0].t == 3)
+        {
+            r += ((r*3) + ((n[0].c.value+n[0].c.type_value) * n[0].t));
+            r += 200;
+        }
+        else if(n[0].t == 2)
+        {
+            r += ((r*1) + ((n[0].c.value+n[0].c.type_value) * n[0].t)); 
+        }
+        else
+        {
+            r = 0;
+        }
+        //----------------->
+        if(n[1].t == 3)
+        {
+            r += ((r*3) + ((n[0].c.value+n[0].c.type_value) * n[0].t));
+            r += 200;
+        }
+        else if(n[1].t == 2)
+        {
+            r += ((r*1) + ((n[0].c.value+n[0].c.type_value) * n[0].t)); 
+        }
+        else
+        {
+            r = 0;
+        }
+    }
+    else if(n.length == 0)
+    {
+        r = 0;
+        u = null;
+        for(let i=0; i < hand.length; i++)
+        {
+            if(u !== null)
+            {
+                if(u.type === hand[i].type || isComodin(hand[i], Room))
+                {
+                    if(isComodin(hand[i], Room))
+                    {
+                        hand[i].value = u.value;
+                        hand[i].type = u.type;
+                    }
+                    r += hand[i].type_value;
+                }
+                else
+                {
+                    r = 0;
+                    break;
+                }
+            }
+            u = hand[i];
+        }
+        if(r > 0)
+        {
+            r += (100*5);
+        }
+        else
+        {
+            hand.sort((a, b) => {
+                return a.value - b.value
+            })
+            r += (hand[hand.length-1].value + hand[hand.length-1].type_value);
+        }
+    }
+    return r;
 }
 
 router.get('/room', (req, res) => {
@@ -485,13 +619,5 @@ router.get('/room', (req, res) => {
     });
     res.render('links/room', {room_id: room});
 });
-
-Array.prototype.swap = function (x,y) 
-{
-    var b = this[x];
-    this[x] = this[y];
-    this[y] = b;
-    return this;
-}
 
 module.exports = router;

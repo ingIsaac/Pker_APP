@@ -188,7 +188,8 @@
           const n = e.dataTransfer.getData("Text");
           if(!n){return}
           const p = e.target.parentElement.id;
-          if(!p){return}         
+          if(!p){return}
+          if(n.length > 3 || p.length > 3){return}
           socket.emit('swap_card', {new_card: n, prev_card: p})      
         }
 
