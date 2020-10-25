@@ -10,7 +10,7 @@
     <div>
       <nav class="navbar navbar-expand-lg navbar-light">
         <button class="btn btn-primary" id="menu-toggle">Toggle</button>
-        <div style="margin-left: 1em; width: 100%; border-bottom: 1px solid black;">
+        <div style="margin-left: 1em; width: 100%; border-bottom: 1px solid #C0C1C0; color: white;">
           <h6 id="p_name" style="float: right;"></h6>
         </div>
       </nav>
@@ -21,20 +21,20 @@
         </div>
         <div class="row" style="margin: 1em 0 2em 0;">
           <div class="col-md-6">
-            <button class="btn btn-info btn-block" id="init">Iniciar Partida</button>
-            <button class="btn btn-info btn-block" id="end_turn">Terminar Turno</button>
-            <button class="btn btn-info btn-block" id="take_all">Tomar Todas</button>
-            <button class="btn btn-danger btn-block" id="tocar">Tocar</button>
+            <button class="btn btn-info btn-block" id="init"><i class="fab fa-buffer"></i> Iniciar Partida</button>
+            <button class="btn btn-info btn-block" id="end_turn"><i class="fas fa-arrow-right"></i> Terminar Turno</button>
+            <button class="btn btn-info btn-block" id="take_all"><i class="fas fa-exchange-alt"></i> Tomar Todas</button>
+            <button class="btn btn-danger btn-block" id="tocar"><i class="far fa-hand-rock"></i> Tocar</button>
             <hr>                              
-            <button class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal">Cambiar Nombre</button>
-            <a class="btn btn-dark btn-block" href="/" style="margin-bottom: 1em;">Salir</a>
+            <button class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal"><i class="fas fa-user"></i> Cambiar Nombre</button>
+            <a class="btn btn-dark btn-block" href="/" style="margin-bottom: 1em;"><i class="fas fa-sign-out-alt"></i> Salir</a>
           </div>
           <div class="col-md-6">
             <ul id="player_data" class="list-group">
-              <li class="list-group-item">Comodines: <div><img class="img-fluid" alt="Responsive image" width="80" height="40" src="/pics/cards/red_joker.svg"><img class="img-fluid" id="_comodin" style="margin-left: 1em;" alt="Responsive image" width="80" height="40" src=""></div></li>
-              <li class="list-group-item">Fichas: <p id="p_fichas"></p></li>
-              <li class="list-group-item">Puntos: <p id="p_puntos"></p></li>
-              <li class="list-group-item">Viudas Restantes: <p id="_viudas"></p></li>
+              <li class="list-group-item"><b>Comodines:</b> <div><img class="img-fluid" alt="Responsive image" width="80" height="40" src="/pics/cards/red_joker.svg"><img class="img-fluid" id="_comodin" style="margin-left: 1em;" alt="Responsive image" width="80" height="40" src=""></div></li>
+              <li class="list-group-item"><b>Fichas:</b> <p id="p_fichas"></p></li>
+              <li class="list-group-item"><b>Puntos:</b> <p id="p_puntos"></p></li>
+              <li class="list-group-item"><b>Viudas Restantes:</b> <p id="_viudas"></p></li>
             </ul>
           </div>                      
         </div>
@@ -47,7 +47,7 @@
 <div class="modal" id="modal" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header" style="text-align: center;">
+      <div class="modal-header">
         <h5 class="modal-title">Nombre de Jugador</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
@@ -67,7 +67,7 @@
 <div class="modal" id="modal2" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header" style="text-align: center;">
+      <div class="modal-header">
         <h5 class="modal-title">Sin Fichas!</h5>
       </div>
       <div class="modal-body" style="text-align: center;">
@@ -87,7 +87,7 @@
 <div class="modal" id="modal3" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header" style="text-align: center;">
+      <div class="modal-header">
         <h5 class="modal-title">Fin de la Partida</h5>
       </div>
       <div class="modal-body">
@@ -100,11 +100,32 @@
     </div>
   </div>
 </div>
+{{! Split Deck }}
+<div class="modal" id="modal4" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Encuenta el Comodín!</h5>
+      </div>
+      <div class="modal-body">
+        <div class="container">
+          <img src="/pics/cards/card_back.svg" style="width: 100%; height: 100%;" id="_baraja_partida_img">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="_partir_baraja">Partir Baraja</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
     function reset()
     {
       $('#c_table').empty();
       $('#c_player').empty();
+      $('#players').children().css('background', '#ffffff');
+      $('#_baraja_partida_img').attr('src', '/pics/cards/card_back.svg');
       for(let i=0; i < 5; i++)
       {
           $('#c_table').append('<div class="col-sm" style="padding-right: 0.2em; padding-top: 0;"><img src="/pics/cards/card_back.svg" style="width: 100%; height: 100%;"></div>');
@@ -159,7 +180,12 @@
           {
             if(pick.p_card !== '')
             {
-              socket.emit('swap_card', {new_card: $(e).attr('id'), prev_card: pick.p_card})
+              const new_card = $(e).attr('id');
+              const prev_card = pick.p_card;
+              if(new_card !== pick.p_card)
+              {
+                socket.emit('swap_card', {new_card: new_card, prev_card: prev_card})
+              }
               $(e).css({"padding-bottom": "0"});
               pick.p_card = ''; 
               return     
@@ -225,8 +251,8 @@
                   {$('#p_name').text(data[i].id);}               
                 }
                 if(data[i].nombre)
-                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].nombre + '<br>' + data[i].id + '</li>');}else
-                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].id + '</li>');}
+                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].nombre + '<br>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}else
+                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}
             }           
         });
         socket.on('init', () => {
@@ -317,11 +343,13 @@
 
               if(data.chips === 0)
               {
-                const viudas = $('#_viudas');
-                if(viudas > 0){
+                const viudas = parseInt($('#_viudas').text());
+                if(viudas > 0)
+                {
                   $('#modal2').modal('show');
                 }
-                else{
+                else
+                {
                   alert('Has perdido!');
                   window.location.replace('/')
                 }
@@ -334,11 +362,34 @@
               $('#_end_game_list').empty();
               for(let i=0; i < data.length; i++)
               {
-                let t = $('#_end_game_list').append('<p>Jugador: ' + data[i].id + '</p><p>Puntos: ' + data[i].score + '</p><p>Tipo de Juego: ' + data[i].g_type + '</p>');
+                if(socket.id == data[i].id)
+                {
+                  if(data.nombre)
+                  {
+                    $('#_end_game_list').append('<div style="color: red;"><b>Jugador:</b><p>' + data[i].nombre + ' - ' + data[i].id + '</p><b>Puntos:</b><p>' + data[i].score + '</p><b>Tipo de Juego:</b><p>' + data[i].g_type + '</p></div>');
+                  }
+                  else
+                  {
+                    $('#_end_game_list').append('<div style="color: red;"><b>Jugador:</b><p>' + data[i].id + '</p><b>Puntos:</b><p>' + data[i].score + '</p><b>Tipo de Juego:</b><p>' + data[i].g_type + '</p></div>');
+                  }
+                }
+                else
+                {
+                  if(data.nombre)
+                  {
+                    $('#_end_game_list').append('<div><b>Jugador:</b><p>' + data[i].nombre + ' - ' + data[i].id + '</p><b>Puntos:</b><p>' + data[i].score + '</p><b>Tipo de Juego:</b><p>' + data[i].g_type + '</p></div>');
+                  }
+                  else
+                  {
+                    $('#_end_game_list').append('<div><b>Jugador:</b><p>' + data[i].id + '</p><b>Puntos:</b><p>' + data[i].score + '</p><b>Tipo de Juego:</b><p>' + data[i].g_type + '</p></div>');
+                  }
+                }                
+                const t = $('<div class="container" style="display: inline-flex; margin-bottom: 1em;"></div>');
                 for(let v=0; v < data[i].hand.length; v++)
                 {
-                    $(t).append('<div class="row" style="display: inline-flex; width: 100px;"><div class="col-sm" style="padding-right: 0.2em; padding-top: 0;"><img src="/pics/cards/' + data[i].hand[v].img + '" style="width: 100%; height: 100%;"></div></div>');
+                  $(t).append('<div class="col-sm"><img src="/pics/cards/' + data[i].hand[v].img + '" style="width: 100%; height: 100%;"></div>');
                 }
+                $('#_end_game_list').append(t);
               }
               $('#modal3').modal('show');
             }
@@ -346,6 +397,77 @@
         socket.on('send_next_game', () => {
             reset();
         });
+        socket.on('_extra_card', data => {
+          if(data)
+          {
+            if(socket.id == data.id)
+            {
+              if(data.juego.extra != null)
+              {
+                toastr.info('Has partido la baraja y te has ganado el comodín!');
+                $('#_C'+ data.id).empty();
+                $('#_C'+ data.id).append('<img src="/pics/cards/' + data.juego.extra.img + '" style="width: 32px; height: 50px;">');
+              }
+              else
+              {
+                toastr.info('Has partido la baraja pero no has sacado comodín.');
+              }              
+            }
+            else
+            {
+              if(data.juego.extra != null)
+              {
+                if(data.nombre)
+                {
+                  toastr.info(data.nombre + ' - ' + data.id + ' a partido la baraja y se ha ganado el comodín!');
+                }
+                else
+                {
+                  toastr.info(data.id + ' a partido la baraja y se ha ganado el comodín!');
+                }
+                $('#_C'+ data.id).empty();
+                $('#_C'+ data.id).append('<img src="/pics/cards/' + data.juego.extra.img + '" style="width: 32px; height: 50px;">');
+              }
+              else
+              {
+                if(data.nombre)
+                {
+                  toastr.info(data.nombre + ' - ' + data.id + ' a partido la baraja pero no ha sacado comodín!');
+                }
+                else
+                {
+                  toastr.info(data.id + ' a partido la baraja pero no ha sacado comodín!');
+                }
+              }
+            }
+            //------->
+            $('#_baraja_partida_img').attr('src', '/pics/cards/' + data.extra_img);
+          }           
+        });
+        socket.on('players_data', data => {
+          if(data)
+          {
+            for(let i=0; i < data.length; i++)
+            {
+              $('#_P'+ data[i].id).empty();
+              $('#_P'+ data[i].id).append('<p><b>-Puntos:</b> ' + data[i].juego.points + ' <b>-Fichas:</b> ' + data[i].juego.chips + '</p>');
+              $('#_viudas').text(data[i].viudas);
+              if(data[i].juego.extra == null)
+              {
+                $('#_C'+ data[i].id).empty();
+              }
+            }
+          }        
+        });
+        socket.on('_send_split_deck_request', data => {
+          if(data)
+          {
+            if(socket.id == data)
+            {
+              $('#modal4').modal('show');
+            }
+          }
+        });       
         //Send Data
         $('#init').on('click', () => {
             socket.emit('init');
@@ -364,7 +486,7 @@
             socket.emit('nombre', $('#t_nombre').val().toUpperCase());
         });
         $('#comprar_viuda').on('click', () => {
-            const points = $('#p_puntos');
+            const points = parseInt($('#p_puntos').text());
             if(points >= 500){
               $('#modal2').modal('hide');
               socket.emit('viuda_b');
@@ -375,6 +497,9 @@
         $('#_next_game').on('click', () => {
             $('#modal3').modal('hide');
             socket.emit('request_next_game');
+        });
+        $('#_partir_baraja').on('click', () => {
+            socket.emit('request_split_deck');
         });
     });
 </script>

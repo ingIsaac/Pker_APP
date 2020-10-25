@@ -64,6 +64,7 @@ function getRandomInt(min, max)
 function joinPlayerRoom(IO, socket, room)
 {
     socket.join(room);
+    socket.juego = {points: 0, chips: 2, hand: [], extra: null};
     IO.to(room).emit('connected', socket.id + " se ha unido a esta partida.");
 }
 
@@ -95,19 +96,45 @@ function setupGame(IO, room, req)
 
     const _Rooms = IO.sockets.adapter.rooms[room];
     if(_Rooms){player_count = _Rooms.length}
-    while(deck.length < ((player_count*5) + 5))
-    {
-        const _c = cards[getRandomInt(0,52)]
-        const t = deck.find(c => (c.value+c.type) === (_c.value+_c.type))
-        if(!t)
-        {
-            deck.push(_c);
-        }
-    }
-
+    
     if(IO.sockets.adapter.rooms[room]){
         let k = null;
         let u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+        let m = null;
+        let _m = 0;
+        let _cards = [...cards];
+
+        for(let i=0; i < u.length; i++)
+        {
+            k = IO.sockets.connected[u[i]];
+            if(k)
+            {
+                if(k.juego.extra != null)
+                {
+                    _m = 1;
+                    m = k.juego.extra;
+                    break;
+                }
+            }
+        }
+
+        if(m)
+        {
+            _cards = card.filter(c => (c.value+c.type) === (m.value+m.type));
+        }
+
+        k = null;
+
+        while(deck.length < ((player_count*5) + 5))
+        {
+            const _c = _cards[getRandomInt(0,(52-_m))]
+            const t = deck.find(c => (c.value+c.type) === (_c.value+_c.type))
+            if(!t)
+            {
+                deck.push(_c);
+            }
+        }
+
         for(let i=0; i < u.length; i++)
         {
             let hand = [];
@@ -117,7 +144,12 @@ function setupGame(IO, room, req)
             }
             k = IO.sockets.connected[u[i]];
             if(k){
-                k.juego = {points: 0, chips: 2, hand: hand};
+                k.juego.hand = hand; 
+                if(k.juego.extra != null)
+                {
+                    k.juego.hand.pop();
+                    k.juego.hand.push(k.juego.extra);
+                }               
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -139,11 +171,27 @@ function setupGame(IO, room, req)
             Room.settings.n_turn = 0;
             Room.settings.p_knock = null;
             Room.settings.p_cantake = null;
-            Room.settings.comodin = null;
+            Room.settings.deck_splited = false;
             const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
-            Room.settings.pivote = u[getRandomInt(0, u.length-1)];
+            if(Room.settings.pivote == null)
+            {
+                Room.settings.pivote = u[getRandomInt(0, u.length-1)];
+            }
+            else
+            {
+                const next = u.findIndex(p => p == Room.settings.pivote);
+                if(next < u.length-1)
+                {
+                    Room.settings.pivote = u[next+1]; 
+                }
+                else
+                {
+                    Room.settings.pivote = u[0];
+                }
+            }
             Room.settings.p_turn = Room.settings.pivote;       
             //Send Data
+            IO.to(room).emit('players_data', getPlayersData(IO, room, req, u));
             IO.to(room).emit('room_data', Room.settings);
             IO.to(room).emit('init');
         }
@@ -201,15 +249,11 @@ function pickCard(IO, room, socket, req, data)
 }
 
 function swapCard(socket, data)
-{
-    if(data.prev_card === data.new_card){return}
-    const n_c = cards.find(c => (c.value + c.type) === data.new_card);
-    const p_c = cards.find(c => (c.value + c.type) === data.prev_card);
-    if(n_c === null && p_c === null){return}
+{   
     const p = socket.juego.hand.findIndex(c => (c.value + c.type) === data.prev_card);
     const n = socket.juego.hand.findIndex(c => (c.value + c.type) === data.new_card);
-    socket.juego.hand[n] = p_c;
-    socket.juego.hand[p] = n_c;
+    socket.juego.hand[n] = cards[cards.findIndex(c => (c.value + c.type) === data.prev_card)];
+    socket.juego.hand[p] = cards[cards.findIndex(c => (c.value + c.type) === data.new_card)];
     socket.emit('set_player_cards', socket.juego);
 }
 
@@ -257,6 +301,7 @@ function takeAll(IO, room, req, socket)
 
 function buyWidow(IO, room, socket, req)
 {
+    const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
     const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
@@ -269,7 +314,7 @@ function buyWidow(IO, room, socket, req)
         }       
 
         socket.emit('player_data', socket.juego);
-        IO.to(room).emit('room_data', Room.settings);
+        IO.to(room).emit('players_data', getPlayersData(IO, room, req, u));
     }
 }
 
@@ -286,9 +331,11 @@ function endGame(IO, room, socket, req)
                 const k = IO.sockets.connected[u[i]];
                 if(k)
                 {
-                    const score = scoreHand(k.juego.hand, Room);
+                    const hand = [...k.juego.hand];
+                    const score = scoreHand([...hand], Room);
                     k.juego.points += score.score;
-                    scores.push({id: u[i], name: u[i].nombre, score: score.score, g_type: score.g_type, hand: k.juego.hand});
+                    k.juego.extra = null;
+                    scores.push({id: u[i], name: u[i].nombre, score: score.score, g_type: score.g_type, hand: hand});
                     k.emit('player_data', k.juego);                                                         
                 }                   
             }
@@ -300,14 +347,37 @@ function endGame(IO, room, socket, req)
             if(scores.length > 0)
             {
                 const _k = IO.sockets.connected[scores[0].id];
-                _k.juego.chips -= 1;
+                if(_k.juego.chips > 0)
+                {
+                    _k.juego.chips -= 1;
+                }
                 _k.emit('player_data', _k.juego);                                          
-                Room.settings.winners_list.push(IO.sockets.connected[scores[scores.length-1].id]);
+                Room.settings.winners_list.push(IO.sockets.connected[scores[scores.length-1].id].id);
             }
 
-            IO.to(room).emit('end_game', scores);
+            Room.settings.game_in_course = false;
+            scores.sort((a, b) => {
+                return b.score - a.score;
+            });
+            IO.to(room).emit('end_game', scores);     
+            IO.to(room).emit('players_data', getPlayersData(IO, room, req, u));
         }
     }
+}
+
+function getPlayersData(IO, room, req, socketIdList)
+{
+    const players_data = [];
+    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {
+        for(let i=0; i < socketIdList.length; i++)
+        {
+            const player = IO.sockets.connected[socketIdList[i]];
+            players_data.push({id: player.id, juego: player.juego, viudas: Room.settings.widows});
+        }
+    }  
+    return players_data;
 }
 
 function scoreHand(hand, Room)
@@ -340,11 +410,13 @@ function getOrderType(hand, Room)
     let k = v.value;
     for(let i=0; i < hand.length; i++)
     {       
-        if(s >= 14 && hand[i].value < s)
+        if(!isComodin(hand[i], Room))
         {
-            k = hand[i].value;
+            if(s >= 14 && hand[i].value < s)
+            {
+                k = hand[i].value - 1;
+            }          
         }
-        s = hand[i].value;
         if(hand[i].value !== (k+i))
         {
             if(!isComodin(hand[i], Room))
@@ -354,14 +426,32 @@ function getOrderType(hand, Room)
             }
             else
             {
-                q = (k+i);
+                hand[i].value = (k+i);
+                s = hand[i].value;
+                q += (k+i);
             }         
         }
         else
         {
-            q = hand[i].value;
+            if(i == 0)
+            {
+                if(isComodin(hand[i], Room))
+                {
+                    for(let v=0; v < hand.length; v++)
+                    {
+                        if(!isComodin(hand[v], Room))
+                        {
+                            hand[i].value = hand[v].value - 1;              
+                            break;
+                        }
+                    }
+                    k = hand[i].value;
+                }
+            }
+            q += hand[i].value;
+            s = hand[i].value;
         }
-    }    
+    }
     if(r > 0)
     {      
         g_type = 'Escalera';
@@ -391,7 +481,7 @@ function getOrderType(hand, Room)
 
 function getRepetedType(hand, Room)
 {
-    let r = 100;
+    let r = 0;
     let g_type = '';     
     let t = 1;
     let u = null;
@@ -457,22 +547,22 @@ function getRepetedType(hand, Room)
 
         if(j.length == 5)
         {
-            r += (r*10);
+            r += 1000;
             g_type = 'Quintilla'       
         }
         else if(j.length == 4)
         {
-            r += (r*8);
+            r += 800;
             g_type = 'Poker'
         }
         else if(j.length == 3)
         {
-            r += (r*3);
+            r += 300;
             g_type = 'Tercia' 
         }
         else if(j.length == 2)
         {
-            r += (r*1);
+            r += 100;
             g_type = 'Un par'
         }
 
@@ -487,13 +577,13 @@ function getRepetedType(hand, Room)
 
         if(j.length == 3)
         {
-            r += (r*3);
+            r += 300;
             r += 200;
             g_type = 'Full House'
         }
         else if(j.length == 2)
         {
-            r += (r*1);
+            r += 100;
             g_type = 'Dos Pares'
         }
 
@@ -508,13 +598,13 @@ function getRepetedType(hand, Room)
 
         if(j.length == 3)
         {
-            r += (r*3);
+            r += 300;
             r += 200;
             g_type = 'Full House'
         }
         else if(j.length == 2)
         {
-            r += (r*1);
+            r += 100;
             g_type = 'Dos Pares'
         }
      
@@ -567,7 +657,7 @@ function getRepetedType(hand, Room)
         }
         if(r > 0)
         {
-            r += (100*5);
+            r += 500;
             g_type = 'Color'
         }
         else
@@ -587,11 +677,46 @@ function nextGame(IO, room, req)
     const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {       
-        Room.settings.j_jugados++;
-        const comodin = cards.find(c => c.wildcard_value === Room.settings.j_jugados);
-        Room.settings.comodin = comodin.img;
-        IO.to(room).emit('send_next_game');
+        if(!Room.settings.game_in_course)
+        {
+            Room.settings.game_in_course = true;
+            Room.settings.j_jugados++;
+            const comodin = cards.find(c => c.wildcard_value === Room.settings.j_jugados);
+            Room.settings.comodin = comodin.img;
+            IO.to(room).emit('send_next_game');
+            selectSplitDeckPlayer(IO, room, req);
+        }
     }
+}
+
+function selectSplitDeckPlayer(IO, room, req)
+{
+    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {       
+        IO.to(room).emit('_send_split_deck_request', Room.settings.pivote);
+    }
+}
+
+function splitDeck(IO, room, req, socket)
+{   
+    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {    
+        if(!Room.settings.deck_splited)
+        {
+            Room.settings.deck_splited = true;
+            const extra = cards[getRandomInt(0, 52)];
+            if(extra.wildcard_value == Room.settings.j_jugados || extra.wildcard_value == 0)
+            {
+                socket.juego.extra = extra;
+                socket.juego.hand = [];
+                socket.juego.hand.push(extra);
+                socket.emit('set_player_cards', socket.juego);
+            }
+            IO.to(room).emit('_extra_card', {id: socket.id, juego: socket.juego, extra_img: extra.img});
+        }
+    } 
 }
 
 router.get('/room', (req, res) => {
@@ -696,7 +821,10 @@ router.get('/room', (req, res) => {
         }); 
         socket.on('request_next_game', () => {
             nextGame(IO, room, req)
-        });   
+        });
+        socket.on('request_split_deck', () => {
+            splitDeck(IO, room, req, socket)
+        });
     });
     res.render('links/room', {room_id: room});
 });
