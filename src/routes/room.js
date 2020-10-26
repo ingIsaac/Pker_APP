@@ -127,7 +127,7 @@ function setupGame(IO, room, req)
 
         while(deck.length < ((player_count*5) + 5))
         {
-            const _c = _cards[getRandomInt(0,(52-_m))]
+            const _c = _cards[getRandomInt(0, (cards.length-_m))]
             const t = deck.find(c => (c.value+c.type) === (_c.value+_c.type))
             if(!t)
             {
@@ -144,12 +144,17 @@ function setupGame(IO, room, req)
             }
             k = IO.sockets.connected[u[i]];
             if(k){
-                k.juego.hand = hand; 
+                /*k.juego.hand = hand; 
                 if(k.juego.extra != null)
                 {
                     k.juego.hand.pop();
                     k.juego.hand.push(k.juego.extra);
-                }               
+                }*/
+                k.juego.hand.push(cards[11]);
+                k.juego.hand.push(cards[0]);
+                k.juego.hand.push(cards[9]);
+                k.juego.hand.push(cards[12]);
+                k.juego.hand.push(cards[11]);             
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -171,11 +176,10 @@ function setupGame(IO, room, req)
             Room.settings.n_turn = 0;
             Room.settings.p_knock = null;
             Room.settings.p_cantake = null;
-            Room.settings.deck_splited = false;
             const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
             if(Room.settings.pivote == null)
             {
-                Room.settings.pivote = u[getRandomInt(0, u.length-1)];
+                Room.settings.pivote = u[getRandomInt(0, u.length)];
             }
             else
             {
@@ -332,7 +336,7 @@ function endGame(IO, room, socket, req)
                 if(k)
                 {
                     const hand = [...k.juego.hand];
-                    const score = scoreHand([...hand], Room);
+                    const score = scoreHand(hand, Room);
                     k.juego.points += score.score;
                     k.juego.extra = null;
                     scores.push({id: u[i], name: u[i].nombre, score: score.score, g_type: score.g_type, hand: hand});
@@ -356,6 +360,7 @@ function endGame(IO, room, socket, req)
             }
 
             Room.settings.game_in_course = false;
+            Room.settings.deck_splited = false;
             scores.sort((a, b) => {
                 return b.score - a.score;
             });
@@ -382,11 +387,16 @@ function getPlayersData(IO, room, req, socketIdList)
 
 function scoreHand(hand, Room)
 {
-    const orderType = getOrderType(hand, Room);
-    const repetedType = getRepetedType(hand, Room);
+    const orderType = getOrderType([...hand], Room);
+    const colorType = getRepetedColor([...hand], Room);
+    const repetedType = getRepetedValues([...hand], Room);
     if(orderType.score > 0)
     {
         return orderType;
+    }
+    else if(colorType.score > 0)
+    {
+        return colorType;
     }
     else if(repetedType.score > 0)
     {
@@ -406,6 +416,7 @@ function getOrderType(hand, Room)
     let g_type = '';     
     let v = hand[0];
     let s = 0;
+    let _s = 0;
     let q = 0;
     let k = v.value;
     for(let i=0; i < hand.length; i++)
@@ -429,6 +440,12 @@ function getOrderType(hand, Room)
                 hand[i].value = (k+i);
                 s = hand[i].value;
                 q += (k+i);
+                _s++;
+                if(_s == 5)
+                {
+                    r = 0;
+                    break;
+                }
             }         
         }
         else
@@ -446,6 +463,7 @@ function getOrderType(hand, Room)
                         }
                     }
                     k = hand[i].value;
+                    _s++;
                 }
             }
             q += hand[i].value;
@@ -469,31 +487,81 @@ function getOrderType(hand, Room)
         {
             r += 500;
             g_type = 'Flor';
-            if(v.value === 10)
+            if(v.value === 10 && _s <= 1)
             {
                 g_type = 'Flor Imperial';
-                r += 1000;
+                r += 500;
             }
         }
     }
     return {score: r, g_type: g_type}
 }
 
-function getRepetedType(hand, Room)
+function getRepetedColor(hand, Room)
+{
+    let r = 0;
+    let u = null;
+    let g_type = '';
+    for(let i=0; i < hand.length; i++)
+    {
+        if(u !== null)
+        {
+            if(u.type === hand[i].type || isComodin(hand[i], Room))
+            {
+                if(isComodin(hand[i], Room))
+                {
+                    hand[i].value = u.value;
+                    hand[i].type = u.type;
+                    hand[i].type = u.type_value;
+                }
+                r += hand[i].type_value;
+            }
+            else
+            {
+                r = 0;
+                break;
+            }
+        }
+        else
+        {
+            if(isComodin(hand[i], Room))
+            {
+                for(let v=0; v < hand.length; v++)
+                {
+                    if(!isComodin(hand[v], Room))
+                    {
+                        hand[i].value = hand[v].value;                         
+                        hand[i].type = hand[v].type;
+                        hand[i].type_value = hand[v].type_value;                                                
+                        break;
+                    }
+                }
+            }
+        }
+        u = hand[i];
+    }
+    if(r > 0)
+    {
+        r += 500;
+        g_type = 'Color'
+    }
+    return {score: r, g_type: g_type}
+}
+
+function getRepetedValues(hand, Room)
 {
     let r = 0;
     let g_type = '';     
-    let t = 1;
+    let t = 0;
     let u = null;
-    let n = [];
-    let _hand = hand;
+    let n = [{sub_hand: []}, {sub_hand: []}];
+    let _hand = [...hand];
     for(let i=0; i < _hand.length; i++)
     {
         if(u !== null)
         {
             if(u.value === _hand[i].value || isComodin(_hand[i], Room))
             {
-                t++;
                 if(isComodin(_hand[i], Room))
                 {
                     _hand[i].value = u.value;
@@ -502,22 +570,13 @@ function getRepetedType(hand, Room)
                         _hand[i].type = u.type;
                         _hand[i].type_value = u.type_value;
                     }
-                }
-                if(i === _hand.length-1)
-                {
-                    if(t > 1)
-                    {
-                        n.push(_hand[i-1])
-                    }   
-                }
+                }      
+                n[t].sub_hand.push(u); //Prev card
+                n[t].sub_hand.push(_hand[i]); //Ac card 
             }
             else
-            {        
-                if(t > 1)
-                {
-                    n.push(_hand[i-1])
-                }              
-                t = 1;
+            {      
+                t++;
             }
         }
         else
@@ -541,133 +600,81 @@ function getRepetedType(hand, Room)
         }
         u = _hand[i];
     }
-    if(n.length == 1)
-    {
-        const j = _hand.filter(c => c.value == n[0].value);
 
-        if(j.length == 5)
+    if(n[0].sub_hand.length > 0 && n[1].sub_hand.length == 0)
+    {
+        console.log(n[0].sub_hand);
+        if(n[0].sub_hand.length == 5)
         {
             r += 1000;
             g_type = 'Quintilla'       
         }
-        else if(j.length == 4)
+        else if(n[0].sub_hand.length == 4)
         {
             r += 800;
             g_type = 'Poker'
         }
-        else if(j.length == 3)
+        else if(n[0].sub_hand.length == 3)
         {
             r += 300;
             g_type = 'Tercia' 
         }
-        else if(j.length == 2)
+        else if(n[0].sub_hand.length == 2)
         {
             r += 100;
             g_type = 'Un par'
         }
 
-        for(let i=0; i < j.length; i++)
+        for(let i=0; i < n[0].sub_hand.length; i++)
         {
-            r += j[i].value + j[i].type_value;
+            r += n[0].sub_hand[i].value + n[0].sub_hand[i].type_value;
         }
     }
-    else if(n.length == 2)
+    else if(n[0].sub_hand.length > 0 && n[1].sub_hand.length > 0)
     {
-        let j = _hand.filter(c => c.value == n[0].value);
-
-        if(j.length == 3)
+        if(n[0].sub_hand.length == 3)
         {
             r += 300;
             r += 200;
             g_type = 'Full House'
         }
-        else if(j.length == 2)
+        else if(n[0].sub_hand.length == 2)
         {
             r += 100;
             g_type = 'Dos Pares'
         }
 
-        for(let i=0; i < j.length; i++)
+        for(let i=0; i < n[0].sub_hand.length; i++)
         {
-            r += j[i].value + j[i].type_value;
+            r += n[0].sub_hand[i].value + n[0].sub_hand[i].type_value;
         }
 
         //---------------------------------------->
 
-        j = _hand.filter(c => c.value == n[1].value);
-
-        if(j.length == 3)
+        if(n[1].sub_hand.length == 3)
         {
             r += 300;
             r += 200;
             g_type = 'Full House'
         }
-        else if(j.length == 2)
+        else if(n[1].sub_hand.length == 2)
         {
             r += 100;
             g_type = 'Dos Pares'
         }
      
-        for(let i=0; i < j.length; i++)
+        for(let i=0; i < n[1].sub_hand.length; i++)
         {
-            r += j[i].value + j[i].type_value;
+            r += n[1].sub_hand[i].value + n[1].sub_hand[i].type_value;
         }
     }
-    else if(n.length == 0)
-    {
-        r = 0;
-        u = null;
-        for(let i=0; i < hand.length; i++)
-        {
-            if(u !== null)
-            {
-                if(u.type === hand[i].type || isComodin(hand[i], Room))
-                {
-                    if(isComodin(hand[i], Room))
-                    {
-                        hand[i].value = u.value;
-                        hand[i].type = u.type;
-                        hand[i].type = u.type_value;
-                    }
-                    r += hand[i].type_value;
-                }
-                else
-                {
-                    r = 0;
-                    break;
-                }
-            }
-            else
-            {
-                if(isComodin(hand[i], Room))
-                {
-                    for(let v=0; v < hand.length; v++)
-                    {
-                        if(!isComodin(hand[v], Room))
-                        {
-                            hand[i].value = hand[v].value;                         
-                            hand[i].type = hand[v].type;
-                            hand[i].type_value = hand[v].type_value;                                                
-                            break;
-                        }
-                    }
-                }
-            }
-            u = hand[i];
-        }
-        if(r > 0)
-        {
-            r += 500;
-            g_type = 'Color'
-        }
-        else
-        {
-            hand.sort((a, b) => {
-                return a.value - b.value
-            })
-            r += (hand[hand.length-1].value + hand[hand.length-1].type_value);
-            g_type = 'Carta Mayor'
-        }
+    else if(n[0].sub_hand.length == 0 && n[1].sub_hand.length == 0)
+    {    
+        hand.sort((a, b) => {
+            return a.value - b.value
+        })
+        r += (hand[hand.length-1].value + hand[hand.length-1].type_value);
+        g_type = 'Carta Mayor'      
     }
     return {score: r, g_type: g_type};
 }
@@ -706,15 +713,13 @@ function splitDeck(IO, room, req, socket)
         if(!Room.settings.deck_splited)
         {
             Room.settings.deck_splited = true;
-            const extra = cards[getRandomInt(0, 52)];
+            const extra = cards[getRandomInt(0, cards.length)];
             if(extra.wildcard_value == Room.settings.j_jugados || extra.wildcard_value == 0)
             {
-                socket.juego.extra = extra;
-                socket.juego.hand = [];
-                socket.juego.hand.push(extra);
-                socket.emit('set_player_cards', socket.juego);
+                socket.juego.extra = extra;              
             }
             IO.to(room).emit('_extra_card', {id: socket.id, juego: socket.juego, extra_img: extra.img});
+            setupGame(IO, room, req);
         }
     } 
 }

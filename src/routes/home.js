@@ -13,7 +13,7 @@ router.get('/created', (req, res) => {
 
 router.post('/create', (req, res) => {
     const room_id = uid(50);
-    req.app.locals.Rooms.push({id: room_id, settings: {available: true, game_in_course: false, deck_splited: false, n_turn: 0, p_turn: null, pivote: null, p_knock: null, p_cantake: null, widows: 2, j_jugados: 0, comodin: null, c_ronda: false, c_table: [], winners_list: []}});
+    req.app.locals.Rooms.push({id: room_id, settings: {available: true, game_in_course: false, deck_splited: false, n_turn: 0, p_turn: null, pivote: null, p_knock: null, p_cantake: null, widows: 2, j_jugados: 1, comodin: null, c_ronda: false, c_table: [], winners_list: []}});
     res.redirect('/created?r=' + room_id);
 });
 
