@@ -11,7 +11,7 @@
       <nav class="navbar navbar-expand-lg navbar-light">
         <button class="btn btn-info" id="menu-toggle" style="padding: 5px;"><i class="fas fa-arrows-alt-h fa-2x"></i></button>
         <div style="margin-left: 1em; width: 100%; border-bottom: 1px solid #C0C1C0; color: white;">
-          <h6 id="p_name" style="float: right;"></h6>
+          <div id="p_name" style="float: right; text-align:right;"></div>
         </div>
       </nav>
       <div class="container-fluid">
@@ -64,7 +64,7 @@
   </div>
 </div>
 {{! Comprar Viuda }}
-<div class="modal" id="modal2" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
+<div class="modal" style="z-index: 9999;"id="modal2" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -269,9 +269,10 @@
             {
                 if(socket.id == data[i].id)
                 {
+                  $('#p_name').empty();
                   if(data[i].nombre)
-                  {$('#p_name').text(data[i].nombre + '\n' + data[i].id);}else
-                  {$('#p_name').text(data[i].id);}               
+                  {$('#p_name').append('<h4 id="_j_name">' + data[i].nombre + '</h4><h6 id="_j_id">' + data[i].id + '</h6>');}else
+                  {$('#p_name').append('<h6 id="_j_id">' + data[i].id + '</h6>');}               
                 }
                 if(data[i].nombre)
                 {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].nombre + '<br>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}else
@@ -313,7 +314,16 @@
               $('#'+ data.p_turn).css('background','#C1C1FB');
               if(socket.id == data.p_turn)
               {
-                toastr.info($('#p_name').text(), 'Es tu Turno:');
+                const player_name = $('#_j_name').text();
+                const player_id = $('#_j_id').text();
+                if(player_name)
+                {
+                  toastr.info(player_name + ' - ' + player_id, 'Es tu Turno:');
+                }
+                else
+                {
+                  toastr.info(player_id, 'Es tu Turno:');
+                }
                 disable = false;
                 //Enable End_Turn button
                 $('#end_turn').show();
@@ -361,21 +371,19 @@
             if(data)
             {             
               $('#p_fichas').text(data.chips);
-              $('#p_puntos').text(data.points);
-
-              if(data.chips === 0)
-              {
-                const viudas = parseInt($('#_viudas').text());
-                if(viudas > 0)
-                {
-                  $('#modal2').modal('show');
-                }
-                else
-                {
-                  socket.emit('lose');                 
-                }
-              }
+              $('#p_puntos').text(data.points);            
             }
+        });
+        socket.on('check_player_chips', data => {
+            const viudas = parseInt($('#_viudas').text());
+            if(viudas > 0)
+            {
+              $('#modal2').modal('show');
+            }
+            else
+            {
+              socket.emit('lose');                 
+            }                     
         });
         socket.on('end_game', data => {
             if(data)

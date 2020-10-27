@@ -120,7 +120,7 @@ function setupGame(IO, room, req)
 
         if(m)
         {
-            _cards = card.filter(c => (c.value+c.type) === (m.value+m.type));
+            _cards = cards.filter(c => (c.value+c.type) === (m.value+m.type));
         }
 
         k = null;
@@ -612,9 +612,6 @@ function getRepetedValues(hand, Room)
         }
         u = _hand[i];
     }
-
-    console.log(n[0].sub_hand);
-
     if(n[0].sub_hand.length > 0 && n[1].sub_hand.length == 0)
     {
         if(n[0].sub_hand.length == 5)
@@ -694,6 +691,19 @@ function getRepetedValues(hand, Room)
 
 function nextGame(IO, room, req)
 {
+    const getRoom = IO.sockets.adapter.rooms[room];
+    if(getRoom)
+    {
+        const u = Object.keys(getRoom.sockets); 
+        for(let i=0; i < u.length; i++)
+        {
+            const socket = IO.sockets.connected[u[i]];
+            if(socket.juego.chips == 0)
+            {
+                socket.emit('check_player_chips');
+            }
+        }
+    }
     const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {       
