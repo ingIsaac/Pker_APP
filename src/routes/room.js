@@ -344,7 +344,7 @@ function endGame(IO, room, socket, req)
 
             if(scores.length > 0)
             {
-                const _k = IO.sockets.connected[scores.length-1];
+                const _k = IO.sockets.connected[scores[scores.length-1].id];
                 if(_k.juego.chips > 0)
                 {
                     _k.juego.chips -= 1;
