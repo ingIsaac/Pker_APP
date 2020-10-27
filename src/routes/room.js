@@ -101,7 +101,6 @@ function setupGame(IO, room, req)
         let k = null;
         let u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
         let m = null;
-        let _m = 0;
         let _cards = [...cards];
 
         for(let i=0; i < u.length; i++)
@@ -111,7 +110,6 @@ function setupGame(IO, room, req)
             {
                 if(k.juego.extra != null)
                 {
-                    _m = 1;
                     m = k.juego.extra;
                     break;
                 }
@@ -120,14 +118,14 @@ function setupGame(IO, room, req)
 
         if(m)
         {
-            _cards = cards.filter(c => (c.value+c.type) === (m.value+m.type));
+            _cards = cards.filter(c => (c.value+c.type) !== (m.value+m.type));
         }
 
         k = null;
 
         while(deck.length < ((player_count*5) + 5))
         {
-            const _c = _cards[getRandomInt(0, (cards.length-_m))]
+            const _c = _cards[getRandomInt(0, (_cards.length))]
             const t = deck.find(c => (c.value+c.type) === (_c.value+_c.type))
             if(!t)
             {
@@ -335,7 +333,7 @@ function endGame(IO, room, socket, req)
                     const score = scoreHand(hand, Room);
                     k.juego.points += score.score;
                     k.juego.extra = null;
-                    scores.push({id: u[i], name: u[i].nombre, score: score.score, g_type: score.g_type, hand: hand});
+                    scores.push({id: u[i], nombre: u[i].nombre, score: score.score, g_type: score.g_type, hand: hand});
                     k.emit('player_data', k.juego);                                                         
                 }                   
             }
@@ -346,13 +344,13 @@ function endGame(IO, room, socket, req)
 
             if(scores.length > 0)
             {
-                const _k = IO.sockets.connected[scores[0].id];
+                const _k = IO.sockets.connected[scores.length-1];
                 if(_k.juego.chips > 0)
                 {
                     _k.juego.chips -= 1;
                 }
                 _k.emit('player_data', _k.juego);                                          
-                Room.settings.winners_list.push(IO.sockets.connected[scores[scores.length-1].id].id);
+                Room.settings.winners_list.push(scores[0].id);
             }
 
             Room.settings.game_in_course = false;

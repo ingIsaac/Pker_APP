@@ -119,11 +119,12 @@
     </div>
   </div>
 </div>
+{{! NoSleep }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.11.0/NoSleep.min.js">
-    //NoSleep
     let noSleep = new noSleep();
     function enableNoSleep() 
     {
+      alert('sddfsdfdsf');
       noSleep.enable();
       document.removeEventListener('touchstart', enableNoSleep, false);
     }
@@ -178,7 +179,9 @@
         reset();
 
         //WebSockets
-        const socket = io();
+        const socket = io.connect('http://{{server_url}}', {
+          reconnection: false,
+        });
 
         //Pick a Card
         $.fn.selectPlayerCard = function (e)
