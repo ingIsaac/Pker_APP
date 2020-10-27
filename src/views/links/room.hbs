@@ -189,7 +189,7 @@
       p_card: '',
       t_card: ''
     }
-    let disable = false;
+    let disable = true;
     let shows_who_knocks = true;
     let table_cards = [];
     let player_cards = [];
@@ -428,6 +428,7 @@
               }
               else
               {
+                disable = true;
                 $('#end_turn').hide();
                 $('#tocar').hide();
                 $('#take_all').hide();
