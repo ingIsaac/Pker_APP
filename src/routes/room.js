@@ -213,7 +213,7 @@ function nextTurn(IO, room, socket, req)
         {
             if(Room.settings.p_knock == next)
             {
-                return endGame(IO, room, socket, req);
+                return endGame(IO, room, req);
             }
             Room.settings.p_turn = next;
             Room.settings.n_turn += 1;
@@ -316,7 +316,7 @@ function buyWidow(IO, room, socket, req)
     }
 }
 
-function endGame(IO, room, socket, req)
+function endGame(IO, room, req)
 {
     if(IO.sockets.adapter.rooms[room]){
         const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
@@ -333,15 +333,13 @@ function endGame(IO, room, socket, req)
                     const score = scoreHand(hand, Room);
                     k.juego.points += score.score;
                     k.juego.extra = null;
-                    scores.push({id: u[i], nombre: u[i].nombre, score: score.score, g_type: score.g_type, hand: hand});
+                    scores.push({id: u[i], nombre: k.nombre, score: score.score, g_type: score.g_type, hand: hand});
                     k.emit('player_data', k.juego);                                                         
                 }                   
             }
-
             scores.sort((a, b) => {
-                return a.value - b.value
+                return b.score - a.score;
             });
-
             if(scores.length > 0)
             {
                 const _k = IO.sockets.connected[scores[scores.length-1].id];
@@ -352,12 +350,8 @@ function endGame(IO, room, socket, req)
                 _k.emit('player_data', _k.juego);                                          
                 Room.settings.winners_list.push(scores[0].id);
             }
-
             Room.settings.game_in_course = false;
             Room.settings.deck_splited = false;
-            scores.sort((a, b) => {
-                return b.score - a.score;
-            });
             IO.to(room).emit('end_game', scores);     
             IO.to(room).emit('players_data', getPlayersData(IO, room, req, u));
         }
@@ -767,6 +761,12 @@ function setNewValuesOnDisconnection(IO, room, req, socket)
         if(getRoom)
         {
             const u = Object.keys(getRoom.sockets);    
+            //Set Winner
+            if(u.length == 1)
+            {
+                const _socket = IO.sockets.connected[u[0]];
+                _socket.emit('winner', {id: _socket.id, nombre: _socket.nombre, puntos: _socket.juego.points});
+            }
 
             //Refresh Pivote
             if(Room.settings.pivote == socket.id)
@@ -918,6 +918,10 @@ router.get('/room', (req, res) => {
         });
         socket.on('get_knock_msg', data => {
             knockMsg(IO, room, data)
+        });
+        socket.on('reload_player_data', () => {
+            socket.emit('player_data', socket.juego); 
+            IO.to(room).emit('players_data', getPlayersData(IO, room, req, Object.keys(IO.sockets.adapter.rooms[room].sockets)));
         });
     });
     res.render('links/room', {room_id: room});

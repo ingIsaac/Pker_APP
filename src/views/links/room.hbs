@@ -48,7 +48,9 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Nombre de Jugador</h5>
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Nombre de Jugador</h5>
+        </div>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -68,7 +70,9 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Sin Fichas!</h5>
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Sin Fichas!</h5>
+        </div>
       </div>
       <div class="modal-body" style="text-align: center;">
         <h4>Te has quedado sin fichas</h4>
@@ -88,7 +92,9 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Fin de la Partida</h5>
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Fin de la Partida</h5>
+        </div>
       </div>
       <div class="modal-body">
         <div class="container" id="_end_game_list"></div>
@@ -105,7 +111,9 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Encuenta el Comodín!</h5>
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Encuenta el Comodín!</h5>
+        </div>
       </div>
       <div class="modal-body">
         <div class="container">
@@ -119,18 +127,44 @@
     </div>
   </div>
 </div>
-{{! NoSleep }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.11.0/NoSleep.min.js">
-    let noSleep = new noSleep();
-    function enableNoSleep() 
-    {
-      alert('sddfsdfdsf');
-      noSleep.enable();
-      document.removeEventListener('touchstart', enableNoSleep, false);
-    }
-    document.addEventListener('touchstart', enableNoSleep, false);
-</script>
+{{! Winner }}
+<div class="modal" id="modal5" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Has Ganado el Juego!</h5>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="container">
+          <img src="/pics/winner.png" style="width: 100%; height: 100%;">
+          <div style="margin-top: 1em; text-align: center;">
+              <h4 id="winner_name"></h4>
+              <h5 id="winner_id"></h5>
+              <h2 id="winner_points"></h2>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-dark" href="/">Salir</a>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
+    //NoSleep.js
+    document.onreadystatechange = () => {
+      if(document.readyState === "complete")
+      {
+          var ns = new NoSleep();
+          document.addEventListener('click', function enableNoSleep() {
+            document.removeEventListener('click', enableNoSleep, false);
+            ns.enable();
+          }, false);
+      }
+    };
+
     //Reset Function
     function reset()
     {
@@ -278,9 +312,10 @@
                   {$('#p_name').append('<h6 id="_j_id">' + data[i].id + '</h6>');}               
                 }
                 if(data[i].nombre)
-                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].nombre + '<br>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}else
+                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item"><b>' + data[i].nombre + '</b><br>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}else
                 {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}
-            }           
+            }
+            socket.emit('reload_player_data');          
         });
         socket.on('init', () => {
             //Disable Init button
@@ -560,7 +595,16 @@
               }
             }                      
           }
-        });     
+        });
+        socket.on('winner', data => {
+          if(data)
+          {
+            $('#winner_name').text(data.nombre);
+            $('#winner_id').text(data.id);
+            $('#winner_points').text('Puntos: ' + data.puntos);
+            $('#modal5').modal('show');
+          }
+        });   
         //Send Data
         $('#init').on('click', () => {
             socket.emit('init');
