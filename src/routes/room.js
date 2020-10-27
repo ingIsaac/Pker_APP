@@ -227,30 +227,20 @@ function nextTurn(IO, room, socket, req)
 }
 
 function pickCard(IO, room, socket, req, data)
-{
-    //Set Card Table => Player
-    const v = socket.juego.hand.findIndex(c => (c.value + c.type) === data.p_card);
-    socket.juego.hand[v] = cards.find(c => (c.value + c.type) === data.t_card);
-    //Send
+{  
+    socket.juego.hand = data.player_cards;
     socket.emit('set_player_cards', socket.juego);
-
     const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
-        //Set Card Player => Table
-        const _v = Room.settings.c_table.findIndex(c => (c.value + c.type) === data.t_card);
-        Room.settings.c_table[_v] = cards.find(c => (c.value + c.type) === data.p_card);
-        //Send
+        Room.settings.c_table = data.table_cards;
         IO.to(room).emit('set_table_cards', Room.settings);
     }
 }
 
 function swapCard(socket, data)
 {   
-    const p = socket.juego.hand.findIndex(c => (c.value + c.type) === data.prev_card);
-    const n = socket.juego.hand.findIndex(c => (c.value + c.type) === data.new_card);
-    socket.juego.hand[n] = cards[cards.findIndex(c => (c.value + c.type) === data.prev_card)];
-    socket.juego.hand[p] = cards[cards.findIndex(c => (c.value + c.type) === data.new_card)];
+    socket.juego.hand = data;
     socket.emit('set_player_cards', socket.juego);
 }
 
