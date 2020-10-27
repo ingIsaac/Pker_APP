@@ -9,7 +9,7 @@
     <!-- Page Content -->
     <div>
       <nav class="navbar navbar-expand-lg navbar-light">
-        <button class="btn btn-info" id="menu-toggle"><i class="fas fa-arrow-circle-right"></i></button>
+        <button class="btn btn-info" id="menu-toggle" style="padding: 5px;"><i class="fas fa-arrows-alt-h fa-2x"></i></button>
         <div style="margin-left: 1em; width: 100%; border-bottom: 1px solid #C0C1C0; color: white;">
           <h6 id="p_name" style="float: right;"></h6>
         </div>
@@ -73,12 +73,12 @@
       <div class="modal-body" style="text-align: center;">
         <h4>Te has quedado sin fichas</h4>
         <p>Para seguir en el juego necesitas comprar un ficha Viuda por:</p>
-        <h2>500</h2>
+        <h2>{{precioViuda}}</h2>
         <p>puntos</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="comprar_viuda">Comprar</button>
-        <a class="btn btn-dark" href="/">Salir</a>
+        <button type="button" class="btn btn-dark" id="_sin_fichas">Salir</button>
       </div>
     </div>
   </div>
@@ -154,6 +154,7 @@
       p_card: '',
       t_card: ''
     }
+    let dalay = false;
     let disable = false;
     let shows_who_knocks = true;
 
@@ -182,62 +183,72 @@
         //Pick a Card
         $.fn.selectPlayerCard = function (e)
         {
-          if(pick.p_card === $(e).attr('id'))
+          if(!dalay)
           {
-            $(e).css({"padding-bottom": "0"});
-            pick.p_card = '';
-            return
-          }
-          else
-          {
-            if(pick.p_card !== '')
+            dalay = true;
+            setTimeout(function(){dalay = false;}, 200);
+            if(pick.p_card === $(e).attr('id'))
             {
-              const new_card = $(e).attr('id');
-              const prev_card = pick.p_card;
-              if(new_card !== pick.p_card)
-              {
-                socket.emit('swap_card', {new_card: new_card, prev_card: prev_card})
-              }
               $(e).css({"padding-bottom": "0"});
-              pick.p_card = ''; 
-              return     
+              pick.p_card = '';
+              return
             }
-          }
-          $('#c_player').children().css({"padding-bottom": "0"});
-          $(e).css({"padding-bottom": "2em"});
-          pick.p_card = $(e).attr('id');   
-          //Send
-          if(pick.p_card !== '' && pick.t_card !== '')
-          {
-            socket.emit('pick', pick);
-            pick.p_card = '';
-            pick.t_card = '';
-            disable = true;
-            $('#tocar').hide();
+            else
+            {
+              if(pick.p_card !== '')
+              {
+                const new_card = $(e).attr('id');
+                const prev_card = pick.p_card;
+                if(new_card !== pick.p_card)
+                {
+                  socket.emit('swap_card', {new_card: new_card, prev_card: prev_card})
+                }
+                $(e).css({"padding-bottom": "0"});
+                pick.p_card = ''; 
+                return     
+              }
+            }
+            $('#c_player').children().css({"padding-bottom": "0"});
+            $(e).css({"padding-bottom": "2em"});
+            pick.p_card = $(e).attr('id');   
+            //Send
+            if(pick.p_card !== '' && pick.t_card !== '')
+            {
+              socket.emit('pick', pick);
+              pick.p_card = '';
+              pick.t_card = '';
+              disable = true;
+              $('#tocar').hide();
+            }
           }
         }
 
         $.fn.selectTableCard = function (e)
         {
           if(disable){return}
-          if(pick.t_card === $(e).attr('id'))
+          if(!dalay)
           {
-            $(e).css({"padding-top": "0"});
-            pick.t_card = '';
-            return
-          }
-          $('#c_table').children().css({"padding-top": "0"});
-          $(e).css({"padding-top": "2em"});
-          pick.t_card = $(e).attr('id');
-          //Send
-          if(pick.p_card !== '' && pick.t_card !== '')
-          {
-            socket.emit('pick', pick);
-            pick.p_card = '';
-            pick.t_card = '';
-            disable = true;
-            $('#tocar').hide();
-          }
+            dalay = true;
+            setTimeout(function(){dalay = false;}, 200);
+            if(pick.t_card === $(e).attr('id'))
+            {
+              $(e).css({"padding-top": "0"});
+              pick.t_card = '';
+              return
+            }
+            $('#c_table').children().css({"padding-top": "0"});
+            $(e).css({"padding-top": "2em"});
+            pick.t_card = $(e).attr('id');
+            //Send
+            if(pick.p_card !== '' && pick.t_card !== '')
+            {
+              socket.emit('pick', pick);
+              pick.p_card = '';
+              pick.t_card = '';
+              disable = true;
+              $('#tocar').hide();
+            }
+          }        
         }
 
         //Get Status
@@ -297,7 +308,6 @@
                     $('#c_table').append('<div class="col-sm" id="' + (data.c_table[i].value + data.c_table[i].type) + '" style="padding-right: 0.2em; padding-top: 0;" onClick="$(this).selectTableCard(this);" onTouch="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');
                 }
               }
-
               //Set Turn Display
               $('#players').children().css('background', '#F0EFEF');
               $('#'+ data.p_turn).css('background','#C1C1FB');
@@ -326,7 +336,6 @@
                 $('#tocar').hide();
                 $('#take_all').hide();
               }
-
               //Get Game State
               if(data.p_knock)
               {
@@ -335,16 +344,12 @@
                 {
                   shows_who_knocks = false;
                   $('#'+ data.p_knock).css('background','#F67F7F');
-                  if(socket.id !== data.p_knock)
-                  {           
-                    toastr.error($('#p_name').text() + ' ha tocado. Te queda solo un turno.', 'Han Tocado!');
-                  }    
+                  socket.emit('get_knock_msg', data.p_knock);
                 }               
               }
-
               //Viudad
               $('#_viudas').text(data.widows);
-
+              //Display Wildcard
               if(data.j_jugados > 0)
               {
                 $('#_comodin').show();
@@ -367,8 +372,7 @@
                 }
                 else
                 {
-                  alert('Has perdido!');
-                  window.location.replace('/')
+                  socket.emit('lose');                 
                 }
               }
             }
@@ -479,16 +483,73 @@
         socket.on('_send_split_deck_request', data => {
           if(data)
           {
-            if(socket.id == data)
+            if(socket.id == data.id)
             {
               $('#modal4').modal('show');
             }
             else
             {
-              toastr.info($('#p_name').text() + ' partirá la baraja.', 'En búsqueda del comodín:');
+              if(data.nombre)
+              {
+                toastr.info(data.nombre + ' - ' + data.id + ' partirá la baraja.', 'En búsqueda del comodín:');
+              }
+              else
+              {
+                toastr.info(data.id + ' partirá la baraja.', 'En búsqueda del comodín:');
+              }
             }
           }
-        });       
+        }); 
+        socket.on('someone_bought_a_window', data => {
+          if(data)
+          {
+            if(data.nombre)
+            {
+              toastr.info(data.nombre + ' - ' + data.id + ' ha comprado una viuda.');
+            }
+            else
+            {
+              toastr.info(data.id + ' ha comprado una viuda.');
+            }
+          }
+        });
+        socket.on('send_loser_msg', data => {
+          if(data)
+          {
+            if(socket.id == data.id)
+            {
+              alert('Te has quedado sin fichas! Estas fuera del juego.');
+              window.location.replace('/')
+            }
+            else
+            {
+              if(data.nombre)
+              {
+                toastr.info(data.nombre + ' - ' + data.id + ' se ha quedado sin fichas.', 'Expulsado:');
+              }
+              else
+              {
+                toastr.info(data.id + ' se ha quedado sin fichas.', 'Expulsado:');
+              }
+            }            
+          }
+        });  
+        socket.on('send_knock_msg', data => {
+          if(data)
+          {
+            if(socket.id !== data.id)
+            {
+              if(data.nombre)
+              {
+                toastr.error(data.nombre + ' - ' + data.id + ' ha tocado. Te queda solo un turno.', 'Han Tocado!');
+              }
+              else
+              {
+                toastr.error(data.id + ' ha tocado. Te queda solo un turno.', 'Han Tocado!');
+              }
+            }                      
+          }
+        });     
         //Send Data
         $('#init').on('click', () => {
             socket.emit('init');
@@ -508,7 +569,7 @@
         });
         $('#comprar_viuda').on('click', () => {
             const points = parseInt($('#p_puntos').text());
-            if(points >= 500){
+            if(points >= {{precioViuda}}){
               $('#modal2').modal('hide');
               socket.emit('viuda_b');
             }else{
@@ -521,6 +582,9 @@
         });
         $('#_partir_baraja').on('click', () => {
             socket.emit('request_split_deck');
+        });
+        $('#_sin_fichas').on('click', () => {
+            socket.emit('lose');
         });
     });
 </script>

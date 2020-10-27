@@ -144,17 +144,12 @@ function setupGame(IO, room, req)
             }
             k = IO.sockets.connected[u[i]];
             if(k){
-                /*k.juego.hand = hand; 
+                k.juego.hand = hand; 
                 if(k.juego.extra != null)
                 {
                     k.juego.hand.pop();
                     k.juego.hand.push(k.juego.extra);
-                }*/
-                k.juego.hand.push(cards[11]);
-                k.juego.hand.push(cards[0]);
-                k.juego.hand.push(cards[9]);
-                k.juego.hand.push(cards[12]);
-                k.juego.hand.push(cards[11]);             
+                }                     
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -309,12 +304,13 @@ function buyWidow(IO, room, socket, req)
     const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
-        const cost = 500;
+        const cost = process.env._APP_PRECIO_VIUDA;
         if(socket.juego.points >= cost)
         {
-            socket.juego.points -= 500;
+            socket.juego.points -= cost;
             socket.juego.chips += 1;
             Room.settings.widows -= 1;
+            IO.to(room).emit('someone_bought_a_window', {id: socket.id, nombre: socket.nombre});
         }       
 
         socket.emit('player_data', socket.juego);
@@ -571,12 +567,28 @@ function getRepetedValues(hand, Room)
                         _hand[i].type_value = u.type_value;
                     }
                 }      
-                n[t].sub_hand.push(u); //Prev card
-                n[t].sub_hand.push(_hand[i]); //Ac card 
+                if(n[t])
+                {
+                    if(n[t].sub_hand.length == 0)
+                    {
+                        n[t].sub_hand.push(u);
+                        n[t].sub_hand.push(_hand[i]);
+                    }
+                    else
+                    {
+                        n[t].sub_hand.push(_hand[i]);
+                    }
+                }
             }
             else
-            {      
-                t++;
+            {     
+                if(n[t])
+                {                  
+                    if(n[t].sub_hand.length > 0)
+                    {
+                        t++;
+                    } 
+                } 
             }
         }
         else
@@ -601,9 +613,10 @@ function getRepetedValues(hand, Room)
         u = _hand[i];
     }
 
+    console.log(n[0].sub_hand);
+
     if(n[0].sub_hand.length > 0 && n[1].sub_hand.length == 0)
     {
-        console.log(n[0].sub_hand);
         if(n[0].sub_hand.length == 5)
         {
             r += 1000;
@@ -701,7 +714,8 @@ function selectSplitDeckPlayer(IO, room, req)
     const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {       
-        IO.to(room).emit('_send_split_deck_request', Room.settings.pivote);
+        const socket = IO.sockets.connected[Room.settings.pivote];
+        IO.to(room).emit('_send_split_deck_request', {id: socket.id, nombre: socket.nombre});
     }
 }
 
@@ -721,6 +735,66 @@ function splitDeck(IO, room, req, socket)
             IO.to(room).emit('_extra_card', {id: socket.id, juego: socket.juego, extra_img: extra.img});
             setupGame(IO, room, req);
         }
+    } 
+}
+
+function lose(IO, room, req, socket)
+{
+    IO.to(room).emit('send_loser_msg', {id: socket.id, nombre: socket.nombre});
+    selectSplitDeckPlayer(IO, room, req);
+}
+
+function knockMsg(IO, room, data)
+{
+    const socket = IO.sockets.connected[data];
+    IO.to(room).emit('send_knock_msg', {id: socket.id, nombre: socket.nombre});
+}
+
+function setNewValuesOnDisconnection(IO, room, req, socket)
+{
+    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {    
+        const getRoom = IO.sockets.adapter.rooms[room];
+        if(getRoom)
+        {
+            const u = Object.keys(getRoom.sockets);    
+
+            //Refresh Pivote
+            if(Room.settings.pivote == socket.id)
+            {
+                const next = u.findIndex(p => p == Room.settings.pivote);
+                if(next < u.length-1)
+                {
+                    Room.settings.pivote = u[next+1]; 
+                }
+                else
+                {
+                    Room.settings.pivote = u[0];
+                }
+            }
+
+            //Cancel Knocking
+            if(Room.settings.p_knock == socket.id)
+            {           
+                Room.settings.p_knock = null;
+                Room.settings.p_cantake = null;
+            }
+
+            //Cancel CanTake
+            if(Room.settings.p_cantake == socket.id)
+            {           
+                const next = u.findIndex(p => p == Room.settings.p_cantake);
+                if(next == 0)
+                {
+                    Room.settings.pivote = u[u.length-1]; 
+                }
+                else
+                {
+                    Room.settings.pivote = u[next-1];
+                }       
+            }
+        }      
     } 
 }
 
@@ -791,6 +865,7 @@ router.get('/room', (req, res) => {
             //Get player => Players          
             console.log("User disconnected: " + socket.id);
             IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
+            setNewValuesOnDisconnection(IO, room, req, socket)
             //Send List of Players
             sendPlayerList(IO, room)
             //Set Next Turn
@@ -829,6 +904,12 @@ router.get('/room', (req, res) => {
         });
         socket.on('request_split_deck', () => {
             splitDeck(IO, room, req, socket)
+        });
+        socket.on('lose', () => {
+            lose(IO, room, req, socket)
+        });
+        socket.on('get_knock_msg', data => {
+            knockMsg(IO, room, data)
         });
     });
     res.render('links/room', {room_id: room});

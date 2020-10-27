@@ -37,6 +37,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 //locals
 app.locals.appName = process.env._APP_NAME;
 app.locals.Rooms = [];
+app.locals.precioViuda = process.env._APP_PRECIO_VIUDA;
 
 //routes
 app.use(require('./routes/home'));
