@@ -97,6 +97,9 @@
         </div>
       </div>
       <div class="modal-body">
+        <div style="max-height: 500px; overflow: auto;">
+
+        </div>
         <div class="container" id="_end_game_list"></div>
       </div>
       <div class="modal-footer">
@@ -117,7 +120,7 @@
       </div>
       <div class="modal-body">
         <div class="container">
-          <img src="/pics/cards/card_back.svg" style="width: 100%; height: 100%;" id="_baraja_partida_img">
+          <img src="/pics/cards/card_back.svg" style="max-height: 500px; width: 100%; height: 100%;" id="_baraja_partida_img">
         </div>
       </div>
       <div class="modal-footer">
@@ -360,7 +363,7 @@
                   {$('#p_name').append('<h6 id="_j_id">' + data[i].id + '</h6>');}               
                 }
                 if(data[i].nombre)
-                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item"><b>' + data[i].nombre + '</b><br>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}else
+                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item"><b id="pn_li_' + data[i].id + '">' + data[i].nombre + '</b><br>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}else
                 {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}
             }
             socket.emit('reload_player_data');          
@@ -403,7 +406,7 @@
               $('#' + data.p_turn).css('background','#b6fcba');
               if(socket.id == data.p_turn)
               {
-                const player_name = $('#' + data.p_turn).find('b').text();
+                const player_name = $('#pn_li_' + data.p_turn).text();
                 const player_id = data.p_turn;
                 if(player_name)
                 {
@@ -433,15 +436,18 @@
               }
               else
               {
-                const player_name = $('#' + data.p_turn).find('b').text();
-                const player_id = data.p_turn;
-                if(player_name)
+                if(data.p_turn)
                 {
-                  toastr.info(player_name + ' - ' + player_id, 'Es Turno de:');
-                }
-                else
-                {
-                  toastr.info(player_id, 'Es Turno de:');
+                  const player_name = $('#pn_li_' + data.p_turn).text();
+                  const player_id = data.p_turn;
+                  if(player_name)
+                  {
+                    toastr.info(player_name + ' - ' + player_id, 'Es Turno de:');
+                  }
+                  else
+                  {
+                    toastr.info(player_id, 'Es Turno de:');
+                  }
                 }
                 disable = true;
                 $('#end_turn').hide();

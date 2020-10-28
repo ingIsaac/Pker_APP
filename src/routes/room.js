@@ -169,23 +169,6 @@ function setupGame(IO, room, req)
             Room.settings.n_turn = 0;
             Room.settings.p_knock = null;
             Room.settings.p_cantake = null;
-            const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
-            if(Room.settings.pivote == null)
-            {
-                Room.settings.pivote = u[getRandomInt(0, u.length)];
-            }
-            else
-            {
-                const next = u.findIndex(p => p == Room.settings.pivote);
-                if(next < u.length-1)
-                {
-                    Room.settings.pivote = u[next+1]; 
-                }
-                else
-                {
-                    Room.settings.pivote = u[0];
-                }
-            }
             Room.settings.p_turn = Room.settings.pivote;       
             //Send Data
             IO.to(room).emit('players_data', getPlayersData(IO, room, req, u));
@@ -385,7 +368,7 @@ function scoreHand(hand, Room)
 
 function isComodin(card, Room)
 {
-    if(card.value === 0 || card.wildcard_value === Room.settings.j_jugados){return true}
+    if(card.wildcard_value === 0 || card.wildcard_value === Room.settings.j_jugados){return true}
 }
 
 function getOrderType(hand, Room)
@@ -715,6 +698,24 @@ function selectSplitDeckPlayer(IO, room, req)
     const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {       
+        //Set Pivote
+        const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+        if(Room.settings.pivote == null)
+        {
+            Room.settings.pivote = u[getRandomInt(0, u.length)];
+        }
+        else
+        {
+            const next = u.findIndex(p => p == Room.settings.pivote);
+            if(next < u.length-1)
+            {
+                Room.settings.pivote = u[next+1]; 
+            }
+            else
+            {
+                Room.settings.pivote = u[0];
+            }
+        }
         const socket = IO.sockets.connected[Room.settings.pivote];
         IO.to(room).emit('_send_split_deck_request', {id: socket.id, nombre: socket.nombre});
     }
@@ -881,12 +882,17 @@ router.get('/room', (req, res) => {
         
         //Get Data
         socket.on('init', () => {
-            setupGame(IO, room, req)
+            selectSplitDeckPlayer(IO, room, req)
         });
         socket.on('nombre', nombre => {
             socket.nombre = nombre;
             //Send List of Players
             sendPlayerList(IO, room)
+            const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+            if(Room)
+            {
+                IO.to(room).emit('room_data', Room.settings);
+            }
         });
         socket.on('end_turn', () => {
             nextTurn(IO, room, socket, req);
@@ -921,11 +927,6 @@ router.get('/room', (req, res) => {
         socket.on('reload_player_data', () => {
             socket.emit('player_data', socket.juego); 
             IO.to(room).emit('players_data', getPlayersData(IO, room, req, Object.keys(IO.sockets.adapter.rooms[room].sockets)));
-            const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
-            if(Room)
-            {
-                IO.to(room).emit('room_data', Room.settings);
-            }
         });
     });
     res.render('links/room', {room_id: room});
