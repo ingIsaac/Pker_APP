@@ -921,6 +921,11 @@ router.get('/room', (req, res) => {
         socket.on('reload_player_data', () => {
             socket.emit('player_data', socket.juego); 
             IO.to(room).emit('players_data', getPlayersData(IO, room, req, Object.keys(IO.sockets.adapter.rooms[room].sockets)));
+            const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+            if(Room)
+            {
+                IO.to(room).emit('room_data', Room.settings);
+            }
         });
     });
     res.render('links/room', {room_id: room});
