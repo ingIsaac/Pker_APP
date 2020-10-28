@@ -321,7 +321,6 @@ function endGame(IO, room, req)
                     _k.juego.chips -= 1;
                 }
                 _k.emit('player_data', _k.juego);                                          
-                Room.settings.winners_list.push(scores[0].id);
             }
             Room.settings.game_in_course = false;
             Room.settings.deck_splited = false;
