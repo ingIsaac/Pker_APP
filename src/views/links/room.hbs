@@ -261,7 +261,10 @@
                   });
                 }
 
-                setTimeout(function(){socket.emit('swap_card', player_cards);}, 300);                           
+                $(e).css({"padding-bottom": "0"});
+                pick.p_card = '';
+                setTimeout(function(){socket.emit('swap_card', player_cards);}, 300); 
+                return                          
               }
               $(e).css({"padding-bottom": "0"});
               pick.p_card = ''; 
@@ -288,11 +291,11 @@
               $(this).remove();
             });            
 
-            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);           
             pick.p_card = '';
             pick.t_card = '';
             disable = true;
             $('#tocar').hide();
+            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);                      
           }          
         }
 
@@ -325,11 +328,11 @@
               $(this).remove();
             });  
 
-            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);           
             pick.p_card = '';
             pick.t_card = '';
             disable = true;
             $('#tocar').hide();
+            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);                     
           }                  
         }
 
@@ -381,7 +384,7 @@
             {
               $('#c_table').append('<div class="col-sm" id="tc_' + i + '" style="padding-right: 0.2em; padding-top: 0;" onClick="$(this).selectTableCard(this);" onTouch="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');
             }
-        });
+        });     
         socket.on('room_data', (data) => {
             if(data)
             {
@@ -397,11 +400,11 @@
               }
               //Set Turn Display
               $('#players').children().css('background', '#F0EFEF');
-              $('#'+ data.p_turn).css('background','#b6fcba');
+              $('#' + data.p_turn).css('background','#b6fcba');
               if(socket.id == data.p_turn)
               {
-                const player_name = $('#_j_name').text();
-                const player_id = $('#_j_id').text();
+                const player_name = $('#' + data.p_turn).find('b').text();
+                const player_id = data.p_turn;
                 if(player_name)
                 {
                   toastr.info(player_name + ' - ' + player_id, 'Es tu Turno:');
@@ -413,7 +416,8 @@
                 disable = false;
                 //Enable End_Turn button
                 $('#end_turn').show();
-                if(data.c_ronda){
+                if(data.c_ronda)
+                {
                   $('#tocar').show();
                   $('#take_all').hide();
                   if(data.p_cantake === socket.id)
@@ -421,13 +425,24 @@
                     $('#take_all').show();
                   }                
                 }
-                else{
+                else
+                {
                   $('#tocar').hide();
                   $('#take_all').show();   
                 }
               }
               else
               {
+                const player_name = $('#' + data.p_turn).find('b').text();
+                const player_id = data.p_turn;
+                if(player_name)
+                {
+                  toastr.info(player_name + ' - ' + player_id, 'Es Turno de:');
+                }
+                else
+                {
+                  toastr.info(player_id, 'Es Turno de:');
+                }
                 disable = true;
                 $('#end_turn').hide();
                 $('#tocar').hide();
@@ -580,6 +595,7 @@
           {
             if(socket.id == data.id)
             {
+              $('#_partir_baraja').show();
               $('#modal4').modal('show');
             }
             else
@@ -656,15 +672,19 @@
         });   
         //Send Data
         $('#init').on('click', () => {
+            $('#init').hide();
             socket.emit('init');
         });
         $('#end_turn').on('click', () => {
+            $('#end_turn').hide();
             socket.emit('end_turn');
         });
         $('#tocar').on('click', () => {
+            $('#tocar').hide(); 
             socket.emit('tocar');
         });
         $('#take_all').on('click', () => {
+            $('#take_all').hide();
             socket.emit('take_all');
         });
         $('#nombre').on('click', () => {
@@ -685,9 +705,11 @@
             socket.emit('request_next_game');
         });
         $('#_partir_baraja').on('click', () => {
+            $('#_partir_baraja').hide();
             socket.emit('request_split_deck');
         });
         $('#_sin_fichas').on('click', () => {
+            $('#modal2').modal('hide');
             socket.emit('lose');
         });
     });
