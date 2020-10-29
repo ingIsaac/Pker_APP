@@ -6,6 +6,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const colors = require('colors');
 const uid = require('uid');
+const { setInterval } = require('timers');
 require('dotenv').config({path: path.join(__dirname, '.env')});
 
 /*setting
@@ -49,38 +50,10 @@ const server = app.listen(app.get('port'), () => {
 const IO = require('socket.io')(server);
 
 //Routes
-app.use(require('./routes/home'));
-app.use(require('./routes/room')(IO));
+app.use(require('./routes/home')(app, IO));
+app.use(require('./routes/room')(app, IO));
 
 //Not Found Error
 app.use(function(req, res){
     res.status(404).send(require('./lib/utilities').sendStatusRenderString(404, 'Página no encontrada.'));
 });
-
-//Delete Unused Rooms
-checkRooms(IO);
-async function checkRooms(IO)
-{
-    let Rooms = app.locals.Rooms;
-    let u = null;
-    let v = [];
-    if(Rooms)
-    {
-        for(let i=0; i < Rooms.length; i++)
-        {
-            u = IO.sockets.adapter.rooms[Rooms[i].id];
-            if(u)
-            {
-                if(u.length == 0)
-                {
-                    v = Rooms.filter(r => r.id != Rooms[i].id)
-                }
-            }
-            else
-            {
-                v = Rooms.filter(r => r.id != Rooms[i].id)
-            }     
-        }    
-        app.locals.Rooms = v;
-    }
-}

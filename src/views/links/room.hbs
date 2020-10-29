@@ -128,7 +128,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="_partir_baraja">Partir Baraja</button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" id="_cerrar_partir_baraja">Cerrar</button>
       </div>
     </div>
   </div>
@@ -175,7 +175,7 @@
       </div>
       <div class="modal-footer">
         <div class="input-group mb-3">
-          <textarea class="form-control" id="_chat_enter_text" style="resize: none;"></textarea>
+          <textarea class="form-control" id="_chat_enter_text" rows="1" style="resize: none; height: 50px; overflow: hidden;"></textarea>
           <div class="input-group-append">
             <button class="btn btn-outline-secondary" style="background-color: #0275d8; color: #ffffff;" type="button" id="_chat_enter_button"><i class="far fa-comment"></i> Enviar</button>
           </div>
@@ -238,30 +238,20 @@
         $("#menu-toggle").click(function(e) {
             e.preventDefault();
             $("#wrapper").toggleClass("toggled");
-        });
-
-        //Modal
-        $('#myModal').on('shown.bs.modal', function () {
-            $('#myInput').trigger('focus');
-        });       
-
-        $(document).on('hide.bs.modal','#chat', function () {
-            $('#_chat_icon').hide();
-        });
+        });             
 
         //Init Gameboard
         reset();
 
         //WebSockets
-        const socket = io.connect('{{server_url}}', {
+        const socket = io.connect('{{server_url}}?r={{room}}', {
           reconnection: false,
         });
 
         //Chat
-
         $.fn.sendChatMessage = function() {
           const message = $('#_chat_enter_text').val();
-          if(message !== '')
+          if(message.length > 0)
           {
             $('#_chat_enter_text').val('');
             const player_name = $('#pn_li_' + socket.id).text();
@@ -279,13 +269,32 @@
         $('#_chat_enter_text').on('keypress',function(e) {
           if(e.which == 13) {
             $(this).sendChatMessage();
+            return false;
           }
         });
 
         $('#_chat_enter_button').on('click',function(e) {
             $(this).sendChatMessage();
         });
+
+        $(document).on('hide.bs.modal','#chat', function () {
+            $('#_chat_icon').hide();          
+        });
+
+        $('#chat').on('shown.bs.modal', function () {
+            $('#_chat_enter_text').focus();
+            const messages = $('#_chat_messages').children().length;
+            if(messages == 0)
+            {
+              socket.emit('get_chat_message');
+            }
+        });  
         //
+
+        //Pick wildcard
+        $('#modal4').on('shown.bs.modal', function () {
+            $('#_cerrar_partir_baraja').hide();
+        });  
 
         //Pick a Card
         $.fn.selectPlayerCard = function (e)
@@ -311,28 +320,28 @@
                 player_cards[prev_card.split('_')[1]] = k_new_card;
 
                 //Animation
-                if(parseInt(new_card.split('_')[1]) < parseInt(prev_card.split('_')[1]))
+                if(parseInt(prev_card.split('_')[1]) < parseInt(new_card.split('_')[1]))
                 {
-                  $('#' + prev_card).toggleClass('animate__animated animate__slideInLeft', () => {
+                   $('#' + new_card).toggleClass('animate__animated animate__fadeOutLeft animate__faster', () => {
                     $(this).remove();
-                  });
-                  $('#' + new_card).toggleClass('animate__animated animate__slideInRight', () => {
+                  }); 
+                  $('#' + prev_card).toggleClass('animate__animated animate__fadeOutRight animate__faster', () => {
                     $(this).remove();
                   });          
                 }
                 else
                 {
-                  $('#' + new_card).toggleClass('animate__animated animate__slideInLeft', () => {
+                  $('#' + new_card).toggleClass('animate__animated animate__fadeOutRight animate__faster', () => {
                     $(this).remove();
-                  });
-                  $('#' + prev_card).toggleClass('animate__animated animate__slideInRight', () => {
+                  }); 
+                  $('#' + prev_card).toggleClass('animate__animated animate__fadeOutLeft animate__faster', () => {
                      $(this).remove();
                   });
                 }
 
                 $(e).css({"padding-bottom": "0"});
                 pick.p_card = '';
-                setTimeout(function(){socket.emit('swap_card', player_cards);}, 500); 
+                setTimeout(function(){socket.emit('swap_card', player_cards);}, 300); 
                 return                          
               }
               $(e).css({"padding-bottom": "0"});
@@ -353,10 +362,10 @@
             player_cards[pick.p_card.split('_')[1]] = prev_t_card;
 
             //Animation
-            $('#' + pick.t_card).toggleClass('animate__animated animate__slideInUp', () => {
+            $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
               $(this).remove();
             });
-            $('#' + pick.p_card).toggleClass('animate__animated animate__slideInDown', () => {
+            $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
               $(this).remove();
             });            
 
@@ -364,7 +373,7 @@
             pick.t_card = '';
             disable = true;
             $('#tocar').hide();
-            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 500);                      
+            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);                      
           }          
         }
 
@@ -390,10 +399,10 @@
             player_cards[pick.p_card.split('_')[1]] = prev_t_card;
 
             //Animation
-            $('#' + pick.t_card).toggleClass('animate__animated animate__slideInUp', () => {
+            $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
               $(this).remove();
             });
-            $('#' + pick.p_card).toggleClass('animate__animated animate__slideInDown', () => {
+            $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
               $(this).remove();
             });  
 
@@ -401,7 +410,7 @@
             pick.t_card = '';
             disable = true;
             $('#tocar').hide();
-            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 500);                     
+            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);                     
           }                  
         }
 
@@ -424,15 +433,18 @@
                 if(socket.id == data[i].id)
                 {
                   $('#p_name').empty();
-                  if(data[i].nombre)
-                  {$('#p_name').append('<h4 id="_j_name">' + data[i].nombre + '</h4><h6 id="_j_id">' + data[i].id + '</h6>');}else
-                  {$('#p_name').append('<h6 id="_j_id">' + data[i].id + '</h6>');}               
+                  $('#p_name').append('<h4 id="_j_name" hidden>' + data[i].nombre + '</h4><h6 id="_j_id">' + data[i].id + '</h6>');
                 }
-                if(data[i].nombre)
-                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item"><b id="pn_li_' + data[i].id + '">' + data[i].nombre + '</b><br>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}else
-                {$('#players').append('<li id="' + data[i].id + '" class="list-group-item">' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');}
+                $('#players').append('<li id="' + data[i].id + '" class="list-group-item"><h5 id="pn_li_' + data[i].id + '" hidden>' + data[i].nombre + '</h5>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');
             }
             socket.emit('reload_player_data');          
+        });
+        socket.on('change_player_name', (data) => {
+          if(data)
+          {
+            $('#_j_name').text(data.nombre).removeAttr('hidden');
+            $('#pn_li_' + data.id).text(data.nombre).removeAttr('hidden');
+          }
         });
         socket.on('init', () => {
             //Disable Init button
@@ -763,49 +775,33 @@
             for(i; i < data.length; i++)
             {
               if(socket.id != data[i].id)
-              {
-                if(_n != data[i].id)
+              {               
+                if(data[i].name)
                 {
-                  if(data[i].name)
-                  {
-                    $('#_chat_messages').append('<div style="text-align: left; padding: 1em 0.5em 1em 0.5em; background-color: #E6E6FA;"><b>' + data[i].name + '</b> - ' + data[i].id + '</br><p>' + data[i].message + '</p></div>');
-                  }
-                  else
-                  {
-                    $('#_chat_messages').append('<div style="text-align: left; padding: 1em 0.5em 1em 0.5em; background-color: #E6E6FA;"><b>' + data[i].id + '</b></br><p>' + data[i].message + '</p></div>');
-                  }
-                  _n = data[i].id;
+                  $('#_chat_messages').append('<div style="word-wrap: break-word; margin: 0.5em 2em 0.5em 0.5em; border-radius: 5px; text-align: left; padding: 0.5em; background-color: #E6E6FA;"><div style="font-size: 12px;">' + new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}) + '</div><b>' + data[i].name + '</b></br><p>' + data[i].message + '</p></div>');
                 }
                 else
                 {
-                  $('#_chat_messages').append('<div style="text-align: left; padding: 1em 0.5em 1em 0.5em; background-color: #E6E6FA;">' + data[i].message + '</p></div>');
-                }
+                  $('#_chat_messages').append('<div style="word-wrap: break-word; margin: 0.5em 2em 0.5em 0.5em; border-radius: 5px; text-align: left; padding: 0.5em; background-color: #E6E6FA;"><div style="font-size: 12px;">' + new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}) + '</div><b>' + data[i].id + '</b></br><p>' + data[i].message + '</p></div>');
+                }               
               }
               else
-              {
-                if(_n != data[i].id)
+              {               
+                if(data[i].name)
                 {
-                  if(data[i].name)
-                  {
-                    $('#_chat_messages').append('<div style="text-align: right; padding: 1em 0.5em 1em 0.5em; background-color: #E6E6FA;"><b>' + data[i].name + '</b> - ' + data[i].id + '</br><p>' + data[i].message + '</p></div>');
-                  }
-                  else
-                  {
-                    $('#_chat_messages').append('<div style="text-align: right; padding: 1em 0.5em 1em 0.5em; background-color: #E6E6FA;"><b>' + data[i].id + '</b></br><p>' + data[i].message + '</p></div>');
-                  }
-                  _n = data[i].id;
+                  $('#_chat_messages').append('<div style="word-wrap: break-word; margin: 0.5em 0.5em 0.5em 2em; border-radius: 5px; text-align: right; padding: 0.5em; background-color: #EDEDFF;"><div style="font-size: 12px;">' + new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}) + '</div><b>' + data[i].name + '</b></br><p>' + data[i].message + '</p></div>');
                 }
                 else
                 {
-                    $('#_chat_messages').append('<div style="text-align: right; padding: 1em 0.5em 1em 0.5em; background-color: #E6E6FA;"><p>' + data[i].message + '</p></div>');
-                }
+                  $('#_chat_messages').append('<div style="word-wrap: break-word; margin: 0.5em 0.5em 0.5em 2em; border-radius: 5px; text-align: right; padding: 0.5em; background-color: #EDEDFF;"><div style="font-size: 12px;">' + new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}) + '</div><b>' + data[i].id + '</b></br><p>' + data[i].message + '</p></div>');
+                }                
               }
             }
             //--------->
             if(chat.length < data.length)
             {
               chat = data;
-              if(!$('#chat').hasClass('in'))
+              if($('#chat').is(':visible') == false)
               {
                 $('#_chat_icon').show();
                 $('#_chat_icon').toggleClass('animate__animated animate__bounceIn', () => {
@@ -832,8 +828,8 @@
             socket.emit('tocar');
         });
         $('#take_all').on('click', () => {
-            $('#take_all').hide();
             disable = true;
+            $('#take_all').hide();
             socket.emit('take_all');
         });
         $('#nombre').on('click', () => {
@@ -855,6 +851,7 @@
         });
         $('#_partir_baraja').on('click', () => {
             $('#_partir_baraja').hide();
+            $('#_cerrar_partir_baraja').show();
             socket.emit('request_split_deck');
         });
         $('#_sin_fichas').on('click', () => {

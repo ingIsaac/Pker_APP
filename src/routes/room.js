@@ -1,3 +1,4 @@
+const { json } = require('body-parser');
 const express = require('express');
 const router = express.Router();
 const cards = [
@@ -89,7 +90,7 @@ function sendPlayerList(IO, room)
     }
 }
 
-function setupGame(IO, room, req)
+function setupGame(IO, room, app)
 {   
     let deck = []
     let player_count = 0
@@ -101,7 +102,7 @@ function setupGame(IO, room, req)
         let k = null;
         let u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
         let m = null;
-        let _cards = [...cards];
+        let _cards = JSON.parse(JSON.stringify(cards));
 
         for(let i=0; i < u.length; i++)
         {
@@ -147,13 +148,13 @@ function setupGame(IO, room, req)
                 {
                     k.juego.hand.pop();
                     k.juego.hand.push(k.juego.extra);
-                }                     
+                }                             
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
         }        
         //Room Settings
-        const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+        const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
         {
             //Disable Room
@@ -171,14 +172,14 @@ function setupGame(IO, room, req)
             Room.settings.p_cantake = null;
             Room.settings.p_turn = Room.settings.pivote;       
             //Send Data
-            IO.to(room).emit('players_data', getPlayersData(IO, room, req, u));
+            IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
             IO.to(room).emit('room_data', Room.settings);
             IO.to(room).emit('init');
         }
     }
 }
 
-function nextTurn(IO, room, socket, req)
+function nextTurn(IO, room, app, socket)
 {
     if(IO.sockets.adapter.rooms[room]){
         const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
@@ -191,12 +192,12 @@ function nextTurn(IO, room, socket, req)
             next = u[0];
         }
 
-        const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+        const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
         {
             if(Room.settings.p_knock == next)
             {
-                return endGame(IO, room, req);
+                return endGame(IO, room, app);
             }
             Room.settings.p_turn = next;
             Room.settings.n_turn += 1;
@@ -209,11 +210,11 @@ function nextTurn(IO, room, socket, req)
     }
 }
 
-function pickCard(IO, room, socket, req, data)
+function pickCard(IO, room, app, socket, data)
 {  
     socket.juego.hand = data.player_cards;
     socket.emit('set_player_cards', socket.juego);
-    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
         Room.settings.c_table = data.table_cards;
@@ -227,7 +228,7 @@ function swapCard(socket, data)
     socket.emit('set_player_cards', socket.juego);
 }
 
-function tocar(IO, room, req, socket)
+function tocar(IO, room, app, socket)
 {
     if(IO.sockets.adapter.rooms[room]){
         const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
@@ -240,20 +241,20 @@ function tocar(IO, room, req, socket)
             canTake = u[t-1];
         }
 
-        const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+        const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
         {
             Room.settings.p_knock = socket.id;
             Room.settings.p_cantake = canTake;
             //Send
-            nextTurn(IO, room, socket, req);
+            nextTurn(IO, room, app, socket)
         }
     }
 }
 
-function takeAll(IO, room, req, socket)
+function takeAll(IO, room, app, socket)
 {
-    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
         const c_table = Room.settings.c_table;
@@ -265,14 +266,14 @@ function takeAll(IO, room, req, socket)
         socket.juego.hand = c_table;
 
         socket.emit('set_player_cards', socket.juego);
-        IO.to(room).emit('room_data', Room.settings);
+        IO.to(room).emit('set_table_cards', Room.settings);
     }
 }
 
-function buyWidow(IO, room, socket, req)
+function buyWidow(IO, room, app, socket)
 {
     const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
-    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
         const cost = process.env._APP_PRECIO_VIUDA;
@@ -285,16 +286,16 @@ function buyWidow(IO, room, socket, req)
         }       
 
         socket.emit('player_data', socket.juego);
-        IO.to(room).emit('players_data', getPlayersData(IO, room, req, u));
+        IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
     }
 }
 
-function endGame(IO, room, req)
+function endGame(IO, room, app)
 {
     if(IO.sockets.adapter.rooms[room]){
         const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
         const scores = [];
-        const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+        const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
         {
             for(let i=0; i < u.length; i++)
@@ -302,7 +303,7 @@ function endGame(IO, room, req)
                 const k = IO.sockets.connected[u[i]];
                 if(k)
                 {
-                    const hand = [...k.juego.hand];
+                    const hand = JSON.parse(JSON.stringify(k.juego.hand));
                     const score = scoreHand(hand, Room);
                     k.juego.points += score.score;
                     k.juego.extra = null;
@@ -325,15 +326,15 @@ function endGame(IO, room, req)
             Room.settings.game_in_course = false;
             Room.settings.deck_splited = false;
             IO.to(room).emit('end_game', scores);     
-            IO.to(room).emit('players_data', getPlayersData(IO, room, req, u));
+            IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
         }
     }
 }
 
-function getPlayersData(IO, room, req, socketIdList)
+function getPlayersData(IO, room, app, socketIdList)
 {
     const players_data = [];
-    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
         for(let i=0; i < socketIdList.length; i++)
@@ -347,9 +348,9 @@ function getPlayersData(IO, room, req, socketIdList)
 
 function scoreHand(hand, Room)
 {
-    const orderType = getOrderType([...hand], Room);
-    const colorType = getRepetedColor([...hand], Room);
-    const repetedType = getRepetedValues([...hand], Room);
+    const orderType = getOrderType(JSON.parse(JSON.stringify(hand)), Room);
+    const colorType = getRepetedColor(JSON.parse(JSON.stringify(hand)), Room);
+    const repetedType = getRepetedValues(JSON.parse(JSON.stringify(hand)), Room);
     if(orderType.score > 0)
     {
         return orderType;
@@ -399,7 +400,7 @@ function getOrderType(hand, Room)
             {
                 hand[i].value = (k+i);
                 s = hand[i].value;
-                q += (k+i);
+                q += (hand[i].value + hand[i].type_value);
                 _s++;
                 if(_s == 5)
                 {
@@ -426,7 +427,7 @@ function getOrderType(hand, Room)
                     _s++;
                 }
             }
-            q += hand[i].value;
+            q += (hand[i].value + hand[i].type_value);
             s = hand[i].value;
         }
     }
@@ -438,9 +439,16 @@ function getOrderType(hand, Room)
         {
             if(isComodin(hand[i], Room))
             {
-                hand[i].type = v.type;
-                hand[i].type_value = v.type_value;
-                r += hand[i].type_value;
+                for(let v=0; v < hand.length; v++)
+                {
+                    if(!isComodin(hand[v], Room))
+                    {
+                        hand[i].type = hand[v].type;
+                        hand[i].type_value = hand[v].type_value;
+                        r += hand[i].type_value;                                                
+                        break;
+                    }
+                }
             }
         }
         if(!hand.find(c => c.type !== v.type))
@@ -474,7 +482,7 @@ function getRepetedColor(hand, Room)
                     hand[i].type = u.type;
                     hand[i].type = u.type_value;
                 }
-                r += hand[i].type_value;
+                r += (hand[i].value + hand[i].type_value);
             }
             else
             {
@@ -515,7 +523,7 @@ function getRepetedValues(hand, Room)
     let t = 0;
     let u = null;
     let n = [{sub_hand: []}, {sub_hand: []}];
-    let _hand = [...hand];
+    let _hand = JSON.parse(JSON.stringify(hand));
     for(let i=0; i < _hand.length; i++)
     {
         if(u !== null)
@@ -525,7 +533,7 @@ function getRepetedValues(hand, Room)
                 if(isComodin(_hand[i], Room))
                 {
                     _hand[i].value = u.value;
-                    if(_hand[i].type === 'j')
+                    if(_hand[i].wildcard_value == 0)
                     {
                         _hand[i].type = u.type;
                         _hand[i].type_value = u.type_value;
@@ -564,7 +572,7 @@ function getRepetedValues(hand, Room)
                     if(!isComodin(_hand[v], Room))
                     {
                         _hand[i].value = _hand[v].value;
-                        if(_hand[i].type === 'j')
+                        if(_hand[i].wildcard_value == 0)
                         {
                             _hand[i].type = _hand[v].type;
                             _hand[i].type_value = _hand[v].type_value;
@@ -662,7 +670,7 @@ function getRepetedValues(hand, Room)
     return {score: r, g_type: g_type};
 }
 
-function nextGame(IO, room, req)
+function nextGame(IO, room, app)
 {
     const getRoom = IO.sockets.adapter.rooms[room];
     if(getRoom)
@@ -677,7 +685,7 @@ function nextGame(IO, room, req)
             }
         }
     }
-    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {       
         if(!Room.settings.game_in_course)
@@ -687,14 +695,14 @@ function nextGame(IO, room, req)
             const comodin = cards.find(c => c.wildcard_value === Room.settings.j_jugados);
             Room.settings.comodin = comodin.img;
             IO.to(room).emit('send_next_game');
-            selectSplitDeckPlayer(IO, room, req);
+            selectSplitDeckPlayer(IO, room, app);
         }
     }
 }
 
-function selectSplitDeckPlayer(IO, room, req)
+function selectSplitDeckPlayer(IO, room, app)
 {
-    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {       
         //Set Pivote
@@ -720,9 +728,9 @@ function selectSplitDeckPlayer(IO, room, req)
     }
 }
 
-function splitDeck(IO, room, req, socket)
+function splitDeck(IO, room, app, socket)
 {   
-    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {    
         if(!Room.settings.deck_splited)
@@ -734,15 +742,15 @@ function splitDeck(IO, room, req, socket)
                 socket.juego.extra = extra;              
             }
             IO.to(room).emit('_extra_card', {id: socket.id, juego: socket.juego, extra_img: extra.img});
-            setupGame(IO, room, req);
+            setupGame(IO, room, app);
         }
     } 
 }
 
-function lose(IO, room, req, socket)
+function lose(IO, room, app, socket)
 {
     IO.to(room).emit('send_loser_msg', {id: socket.id, nombre: socket.nombre});
-    selectSplitDeckPlayer(IO, room, req);
+    selectSplitDeckPlayer(IO, room, app);
 }
 
 function knockMsg(IO, room, data)
@@ -751,9 +759,9 @@ function knockMsg(IO, room, data)
     IO.to(room).emit('send_knock_msg', {id: socket.id, nombre: socket.nombre});
 }
 
-function setNewValuesOnDisconnection(IO, room, req, socket)
+function setNewValuesOnDisconnection(IO, room, app, socket)
 {
-    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {    
         const getRoom = IO.sockets.adapter.rooms[room];
@@ -805,9 +813,9 @@ function setNewValuesOnDisconnection(IO, room, req, socket)
     } 
 }
 
-function chat(IO, room, req, data)
+function chat(IO, room, app, data)
 {
-    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {    
         Room.settings.chats.push(data);
@@ -815,12 +823,20 @@ function chat(IO, room, req, data)
     }
 }
 
-module.exports = function(IO) {
-    let req = null;
-    let room = null;
-    let Rooms = null;
+function getChatMessages(IO, room, app)
+{
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {    
+        IO.to(room).emit('chat_messages', Room.settings.chats);
+    }
+}
+
+//IO Request Handler
+module.exports = function(app, IO) {
+    //Get all players connected
     const Players = Object.keys(IO.sockets.sockets);
-        
+
     //User Connection
     IO.on('connection', (socket) => {
         //Add User to Players
@@ -833,12 +849,12 @@ module.exports = function(IO) {
         if(!t)
         {
             console.log("User connected: " + socket.id);
-            
+            const room = socket.handshake.query.r; 
             //Add User to a Room
-            const _Rooms = IO.sockets.adapter.rooms[room];
-            if(_Rooms)
+            const Rooms = IO.sockets.adapter.rooms[room];
+            if(Rooms)
             {
-                if(_Rooms.length < 8)
+                if(Rooms.length < 8)
                 {
                     joinPlayerRoom(IO, socket, room)
                 }        
@@ -854,73 +870,72 @@ module.exports = function(IO) {
         
         //User Disconnect
         socket.on('disconnect', () => {
+            const room = socket.handshake.query.r;
             //Get player => Players          
             console.log("User disconnected: " + socket.id);
             IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
-            setNewValuesOnDisconnection(IO, room, req, socket)
+            setNewValuesOnDisconnection(IO, room, app, socket)
             //Send List of Players
             sendPlayerList(IO, room)
             //Set Next Turn
-            nextTurn(IO, room, socket, req)
+            nextTurn(IO, room, app, socket)
         }) 
         
         //Get Data
         socket.on('init', () => {
-            selectSplitDeckPlayer(IO, room, req)
+            console.log(socket.handshake.query.r);
+            selectSplitDeckPlayer(IO, socket.handshake.query.r, app)
         });
         socket.on('nombre', nombre => {
             socket.nombre = nombre;
-            //Send List of Players
-            sendPlayerList(IO, room)
-            const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
-            if(Room)
-            {
-                IO.to(room).emit('room_data', Room.settings);
-            }
+            socket.emit('change_player_name', {id: socket.id, nombre: socket.nombre}); 
         });
         socket.on('end_turn', () => {
-            nextTurn(IO, room, socket, req);
+            nextTurn(IO, socket.handshake.query.r, app, socket);
         });
         socket.on('tocar', () => {
-            tocar(IO, room, req, socket)
+            tocar(IO, socket.handshake.query.r, app, socket)
         });
         socket.on('pick', data => {
-            pickCard(IO, room, socket, req, data);
+            pickCard(IO, socket.handshake.query.r, app, socket, data);
         });
         socket.on('take_all', () => {
-            takeAll(IO, room, req, socket)
+            takeAll(IO, socket.handshake.query.r, app, socket)
         });
         socket.on('swap_card', data => {
             swapCard(socket, data);
         }); 
         socket.on('viuda_b', () => {
-            buyWidow(IO, room, socket, req)
+            buyWidow(IO, socket.handshake.query.r, app, socket)
         }); 
         socket.on('request_next_game', () => {
-            nextGame(IO, room, req)
+            nextGame(IO, socket.handshake.query.r, app)
         });
         socket.on('request_split_deck', () => {
-            splitDeck(IO, room, req, socket)
+            splitDeck(IO, socket.handshake.query.r, app, socket)
         });
         socket.on('lose', () => {
-            lose(IO, room, req, socket)
+            lose(IO, socket.handshake.query.r, app, socket)
         });
         socket.on('get_knock_msg', data => {
-            knockMsg(IO, room, data)
+            knockMsg(IO, socket.handshake.query.r, data)
         });
         socket.on('reload_player_data', () => {
             socket.emit('player_data', socket.juego); 
-            IO.to(room).emit('players_data', getPlayersData(IO, room, req, Object.keys(IO.sockets.adapter.rooms[room].sockets)));
+            IO.to(socket.handshake.query.r).emit('players_data', getPlayersData(IO, socket.handshake.query.r, app, Object.keys(IO.sockets.adapter.rooms[socket.handshake.query.r].sockets)));
         });
         socket.on('chat_message', data => {
-            chat(IO, room, req, data)
+            chat(IO, socket.handshake.query.r, app, data)
+        });
+        socket.on('get_chat_message', data => {
+            getChatMessages(IO, socket.handshake.query.r, app)
         });
     });
 
-    router.get('/room', (_req, res) => {
-        req = _req; //Save the Request
-        room = req.query.r; //Save the room
-        Rooms = req.app.locals.Rooms; //Get the Rooms
+    //Route
+    router.get('/room', (req, res) => {
+        const room = req.query.r;
+        const Rooms = req.app.locals.Rooms;
 
         //Check if a valid room
         const r = Rooms.find(_room => {
@@ -941,10 +956,10 @@ module.exports = function(IO) {
                 if(_Rooms.length >= 8)
                 {
                     return res.redirect('/')
-                }        
-            }   
+                }                    
+            }  
         }  
-        res.render('links/room');
+        res.render('links/room', {room: room});
     });
 
     return router;
