@@ -30,17 +30,17 @@ app.engine('.hbs', exphbs({
 }));
 app.set('view engine', '.hbs');
 
-//middlewares
+//Middlewares
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
 
-//locals
+//Locals
 app.locals.appName = process.env._APP_NAME;
 app.locals.Rooms = [];
 app.locals.precioViuda = process.env._APP_PRECIO_VIUDA;
 app.locals.server_url = process.env._APP_URL;
 
-//starting server
+//Starting server
 const server = app.listen(app.get('port'), () => {
     console.log("Server on port:".yellow, app.get('port').red);
 });
@@ -48,7 +48,7 @@ const server = app.listen(app.get('port'), () => {
 //WebSockets
 const IO = require('socket.io')(server);
 
-//routes
+//Routes
 app.use(require('./routes/home'));
 app.use(require('./routes/room')(IO));
 
@@ -57,6 +57,7 @@ app.use(function(req, res){
     res.status(404).send(require('./lib/utilities').sendStatusRenderString(404, 'Página no encontrada.'));
 });
 
+//Delete Unused Rooms
 checkRooms(IO);
 async function checkRooms(IO)
 {
