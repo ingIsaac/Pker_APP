@@ -815,39 +815,14 @@ function chat(IO, room, req, data)
     }
 }
 
-router.get('/room', (req, res) => {
-    let room = req.query.r;
-    let Rooms = req.app.locals.Rooms;
-    //-------------------------------->
-    const IO = req.app.locals.IO;
+module.exports = function(IO) {
+    let req = null;
+    let room = null;
+    let Rooms = null;
     const Players = Object.keys(IO.sockets.sockets);
-    
-    //Check if a valid room
-    const r = Rooms.find(_room => {
-        if(_room)
-        {
-           return _room.id === room && _room.settings.available       
-        }
-    });
-    if(!r)
-    {
-        return res.redirect('/')
-    }
-    else
-    {
-        const _Rooms = IO.sockets.adapter.rooms[r];
-        if(_Rooms)
-        {
-            if(_Rooms.length >= 8)
-            {
-                return res.redirect('/')
-            }        
-        }   
-    }
-    
+        
     //User Connection
-    IO.once('connection', (socket) => {
-
+    IO.on('connection', (socket) => {
         //Add User to Players
         const t = Players.find(player => {
             if(player)
@@ -878,7 +853,7 @@ router.get('/room', (req, res) => {
         }
         
         //User Disconnect
-        socket.once('disconnect', () => {
+        socket.on('disconnect', () => {
             //Get player => Players          
             console.log("User disconnected: " + socket.id);
             IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
@@ -890,10 +865,10 @@ router.get('/room', (req, res) => {
         }) 
         
         //Get Data
-        socket.once('init', () => {
+        socket.on('init', () => {
             selectSplitDeckPlayer(IO, room, req)
         });
-        socket.once('nombre', nombre => {
+        socket.on('nombre', nombre => {
             socket.nombre = nombre;
             //Send List of Players
             sendPlayerList(IO, room)
@@ -903,45 +878,74 @@ router.get('/room', (req, res) => {
                 IO.to(room).emit('room_data', Room.settings);
             }
         });
-        socket.once('end_turn', () => {
+        socket.on('end_turn', () => {
             nextTurn(IO, room, socket, req);
         });
-        socket.once('tocar', () => {
+        socket.on('tocar', () => {
             tocar(IO, room, req, socket)
         });
-        socket.once('pick', data => {
+        socket.on('pick', data => {
             pickCard(IO, room, socket, req, data);
         });
-        socket.once('take_all', () => {
+        socket.on('take_all', () => {
             takeAll(IO, room, req, socket)
         });
-        socket.once('swap_card', data => {
+        socket.on('swap_card', data => {
             swapCard(socket, data);
         }); 
-        socket.once('viuda_b', () => {
+        socket.on('viuda_b', () => {
             buyWidow(IO, room, socket, req)
         }); 
-        socket.once('request_next_game', () => {
+        socket.on('request_next_game', () => {
             nextGame(IO, room, req)
         });
-        socket.once('request_split_deck', () => {
+        socket.on('request_split_deck', () => {
             splitDeck(IO, room, req, socket)
         });
-        socket.once('lose', () => {
+        socket.on('lose', () => {
             lose(IO, room, req, socket)
         });
-        socket.once('get_knock_msg', data => {
+        socket.on('get_knock_msg', data => {
             knockMsg(IO, room, data)
         });
-        socket.once('reload_player_data', () => {
+        socket.on('reload_player_data', () => {
             socket.emit('player_data', socket.juego); 
             IO.to(room).emit('players_data', getPlayersData(IO, room, req, Object.keys(IO.sockets.adapter.rooms[room].sockets)));
         });
-        socket.once('chat_message', data => {
+        socket.on('chat_message', data => {
             chat(IO, room, req, data)
         });
     });
-    res.render('links/room', {room_id: room});
-});
 
-module.exports = router;
+    router.get('/room', (_req, res) => {
+        req = _req; //Save the Request
+        room = req.query.r; //Save the room
+        Rooms = req.app.locals.Rooms; //Get the Rooms
+
+        //Check if a valid room
+        const r = Rooms.find(_room => {
+            if(_room)
+            {
+               return _room.id === room && _room.settings.available       
+            }
+        });
+        if(!r)
+        {
+            return res.redirect('/')
+        }
+        else
+        {
+            const _Rooms = IO.sockets.adapter.rooms[r];
+            if(_Rooms)
+            {
+                if(_Rooms.length >= 8)
+                {
+                    return res.redirect('/')
+                }        
+            }   
+        }  
+        res.render('links/room');
+    });
+
+    return router;
+}

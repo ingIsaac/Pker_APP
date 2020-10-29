@@ -40,15 +40,6 @@ app.locals.Rooms = [];
 app.locals.precioViuda = process.env._APP_PRECIO_VIUDA;
 app.locals.server_url = process.env._APP_URL;
 
-//routes
-app.use(require('./routes/home'));
-app.use(require('./routes/room'));
-
-//Not Found Error
-app.use(function(req, res){
-    res.status(404).send(require('./lib/utilities').sendStatusRenderString(404, 'Página no encontrada.'));
-});
-
 //starting server
 const server = app.listen(app.get('port'), () => {
     console.log("Server on port:".yellow, app.get('port').red);
@@ -56,9 +47,17 @@ const server = app.listen(app.get('port'), () => {
 
 //WebSockets
 const IO = require('socket.io')(server);
-app.locals.IO = IO;
-checkRooms(IO);
 
+//routes
+app.use(require('./routes/home'));
+app.use(require('./routes/room')(IO));
+
+//Not Found Error
+app.use(function(req, res){
+    res.status(404).send(require('./lib/utilities').sendStatusRenderString(404, 'Página no encontrada.'));
+});
+
+checkRooms(IO);
 async function checkRooms(IO)
 {
     let Rooms = app.locals.Rooms;

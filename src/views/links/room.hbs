@@ -403,18 +403,18 @@
         }
 
         //Get Status
-        socket.once('connected', (data) => {
+        socket.on('connected', (data) => {
             toastr.success(data);
         });
-        socket.once('disconnected', (data) => {
+        socket.on('disconnected', (data) => {
             toastr.warning(data);
         });
         //Get Message
-        socket.once('message', (data) => {
+        socket.on('message', (data) => {
             toastr.info(data);
         });
         //Get Data
-        socket.once('players', (data) => {
+        socket.on('players', (data) => {
             $('#players').empty();
             for(let i=0; i < data.length; i++)
             {
@@ -431,11 +431,11 @@
             }
             socket.emit('reload_player_data');          
         });
-        socket.once('init', () => {
+        socket.on('init', () => {
             //Disable Init button
             $('#init').hide();              
         });
-        socket.once('set_player_cards', (data) => {
+        socket.on('set_player_cards', (data) => {
             $('#c_player').empty();
             player_cards = data.hand; //Set Player Hand
             for(let i=0; i < data.hand.length; i++)
@@ -443,7 +443,7 @@
               $('#c_player').append('<div class="col-sm" id="ph_' + i + '" style="padding-right: 0.2em; padding-bottom: 0;" onClick="$(this).selectPlayerCard(this);" onTouch="$(this).selectPlayerCard(this);"><img src="/pics/cards/' + data.hand[i].img + '" style="width: 100%; height: 100%;"></div>');
             }
         });
-        socket.once('set_table_cards', (data) => {
+        socket.on('set_table_cards', (data) => {
             $('#c_table').empty();
             table_cards = data.c_table; //Set Table cards
             for(let i=0; i < data.c_table.length; i++)
@@ -451,7 +451,7 @@
               $('#c_table').append('<div class="col-sm" id="tc_' + i + '" style="padding-right: 0.2em; padding-top: 0;" onClick="$(this).selectTableCard(this);" onTouch="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');
             }
         });     
-        socket.once('room_data', (data) => {
+        socket.on('room_data', (data) => {
             if(data)
             {
               //Check Table Cards
@@ -543,14 +543,14 @@
               }             
             }
         });
-        socket.once('player_data', data => {
+        socket.on('player_data', data => {
             if(data)
             {             
               $('#p_fichas').text(data.chips);
               $('#p_puntos').text(data.points);            
             }
         });
-        socket.once('check_player_chips', data => {
+        socket.on('check_player_chips', data => {
             const viudas = parseInt($('#_viudas').text());
             if(viudas > 0)
             {
@@ -561,7 +561,7 @@
               socket.emit('lose');                 
             }                     
         });
-        socket.once('end_game', data => {
+        socket.on('end_game', data => {
             if(data)
             {             
               $('#_end_game_list').empty();
@@ -603,10 +603,10 @@
               $('#modal3').modal('show');
             }
         });
-        socket.once('send_next_game', () => {
+        socket.on('send_next_game', () => {
           reset();
         });
-        socket.once('_extra_card', data => {
+        socket.on('_extra_card', data => {
           if(data)
           {
             if(socket.id == data.id)
@@ -653,7 +653,7 @@
             $('#_baraja_partida_img').attr('src', '/pics/cards/' + data.extra_img);
           }           
         });
-        socket.once('players_data', data => {
+        socket.on('players_data', data => {
           if(data)
           {
             for(let i=0; i < data.length; i++)
@@ -668,7 +668,7 @@
             }
           }        
         });
-        socket.once('_send_split_deck_request', data => {
+        socket.on('_send_split_deck_request', data => {
           if(data)
           {
             if(socket.id == data.id)
@@ -689,7 +689,7 @@
             }
           }
         }); 
-        socket.once('someone_bought_a_window', data => {
+        socket.on('someone_bought_a_window', data => {
           if(data)
           {
             if(data.nombre)
@@ -702,7 +702,7 @@
             }
           }
         });
-        socket.once('send_loser_msg', data => {
+        socket.on('send_loser_msg', data => {
           if(data)
           {
             if(socket.id == data.id)
@@ -723,7 +723,7 @@
             }            
           }
         });  
-        socket.once('send_knock_msg', data => {
+        socket.on('send_knock_msg', data => {
           if(data)
           {
             if(socket.id !== data.id)
@@ -739,7 +739,7 @@
             }                      
           }
         });
-        socket.once('winner', data => {
+        socket.on('winner', data => {
           if(data)
           {
             $('#winner_name').text(data.nombre);
@@ -748,7 +748,7 @@
             $('#modal5').modal('show');
           }
         });
-        socket.once('chat_messages', data => {
+        socket.on('chat_messages', data => {
           if(data)
           {           
             let i = chat.length;
