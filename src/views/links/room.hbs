@@ -174,7 +174,7 @@
         <div class="input-group mb-3">
           <textarea class="form-control" id="_chat_enter_text" style="resize: none;"></textarea>
           <div class="input-group-append">
-            <button class="btn btn-outline-secondary" type="button" id="_chat_enter_button"><i class="far fa-comment"></i> Enviar</button>
+            <button class="btn btn-outline-secondary" style="background-color: #0275d8; color: #ffffff;" type="button" id="_chat_enter_button"><i class="far fa-comment"></i> Enviar</button>
           </div>
         </div>
       </div>
@@ -239,8 +239,12 @@
 
         //Modal
         $('#myModal').on('shown.bs.modal', function () {
-            $('#myInput').trigger('focus')
+            $('#myInput').trigger('focus');
         });       
+
+        $(document).on('hide.bs.modal','#chat', function () {
+            $('#_chat_icon').hide();
+        });
 
         //Init Gameboard
         reset();
@@ -782,7 +786,9 @@
             {
               chat = data;
               $('#_chat_icon').show();
-              $('#_chat_messages').scr
+              $('#_chat_messages').animate({
+                  scrollTop: $('#_chat_messages').prop("scrollHeight")
+              }, 1000);
               $('#_chat_icon').toggleClass('animate__animated animate__bounceIn', () => {
                 $(this).remove();
               });

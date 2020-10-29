@@ -99,6 +99,10 @@ hr {
   background-color: #F0EFEF;
 }
 
+.btn-outline-secondary:hover {
+  background-color: #2371bb !important;
+}
+
 @media only screen and (max-width: 1200px) {
   #c_table {
     width: 600px;
