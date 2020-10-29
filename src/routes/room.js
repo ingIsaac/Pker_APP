@@ -878,7 +878,7 @@ router.get('/room', (req, res) => {
         }
         
         //User Disconnect
-        socket.on('disconnect', () => {
+        socket.once('disconnect', () => {
             //Get player => Players          
             console.log("User disconnected: " + socket.id);
             IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
@@ -890,10 +890,10 @@ router.get('/room', (req, res) => {
         }) 
         
         //Get Data
-        socket.on('init', () => {
+        socket.once('init', () => {
             selectSplitDeckPlayer(IO, room, req)
         });
-        socket.on('nombre', nombre => {
+        socket.once('nombre', nombre => {
             socket.nombre = nombre;
             //Send List of Players
             sendPlayerList(IO, room)
@@ -903,41 +903,41 @@ router.get('/room', (req, res) => {
                 IO.to(room).emit('room_data', Room.settings);
             }
         });
-        socket.on('end_turn', () => {
+        socket.once('end_turn', () => {
             nextTurn(IO, room, socket, req);
         });
-        socket.on('tocar', () => {
+        socket.once('tocar', () => {
             tocar(IO, room, req, socket)
         });
-        socket.on('pick', data => {
+        socket.once('pick', data => {
             pickCard(IO, room, socket, req, data);
         });
-        socket.on('take_all', () => {
+        socket.once('take_all', () => {
             takeAll(IO, room, req, socket)
         });
-        socket.on('swap_card', data => {
+        socket.once('swap_card', data => {
             swapCard(socket, data);
         }); 
-        socket.on('viuda_b', () => {
+        socket.once('viuda_b', () => {
             buyWidow(IO, room, socket, req)
         }); 
-        socket.on('request_next_game', () => {
+        socket.once('request_next_game', () => {
             nextGame(IO, room, req)
         });
-        socket.on('request_split_deck', () => {
+        socket.once('request_split_deck', () => {
             splitDeck(IO, room, req, socket)
         });
-        socket.on('lose', () => {
+        socket.once('lose', () => {
             lose(IO, room, req, socket)
         });
-        socket.on('get_knock_msg', data => {
+        socket.once('get_knock_msg', data => {
             knockMsg(IO, room, data)
         });
-        socket.on('reload_player_data', () => {
+        socket.once('reload_player_data', () => {
             socket.emit('player_data', socket.juego); 
             IO.to(room).emit('players_data', getPlayersData(IO, room, req, Object.keys(IO.sockets.adapter.rooms[room].sockets)));
         });
-        socket.on('chat_message', data => {
+        socket.once('chat_message', data => {
             chat(IO, room, req, data)
         });
     });
