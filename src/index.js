@@ -57,3 +57,30 @@ const server = app.listen(app.get('port'), () => {
 //WebSockets
 const IO = require('socket.io')(server);
 app.locals.IO = IO;
+checkRooms(IO);
+
+async function checkRooms(IO)
+{
+    let Rooms = app.locals.Rooms;
+    let u = null;
+    let v = [];
+    if(Rooms)
+    {
+        for(let i=0; i < Rooms.length; i++)
+        {
+            u = IO.sockets.adapter.rooms[Rooms[i].id];
+            if(u)
+            {
+                if(u.length == 0)
+                {
+                    v = Rooms.filter(r => r.id != Rooms[i].id)
+                }
+            }
+            else
+            {
+                v = Rooms.filter(r => r.id != Rooms[i].id)
+            }     
+        }    
+        app.locals.Rooms = v;
+    }
+}

@@ -805,6 +805,16 @@ function setNewValuesOnDisconnection(IO, room, req, socket)
     } 
 }
 
+function chat(IO, room, req, data)
+{
+    const Room = req.app.locals.Rooms[req.app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {    
+        Room.settings.chats.push(data);
+        IO.to(room).emit('chat_messages', Room.settings.chats);
+    }
+}
+
 router.get('/room', (req, res) => {
     let room = req.query.r;
     let Rooms = req.app.locals.Rooms;
@@ -834,7 +844,7 @@ router.get('/room', (req, res) => {
             }        
         }   
     }
-
+    
     //User Connection
     IO.once('connection', (socket) => {
 
@@ -926,6 +936,9 @@ router.get('/room', (req, res) => {
         socket.on('reload_player_data', () => {
             socket.emit('player_data', socket.juego); 
             IO.to(room).emit('players_data', getPlayersData(IO, room, req, Object.keys(IO.sockets.adapter.rooms[room].sockets)));
+        });
+        socket.on('chat_message', data => {
+            chat(IO, room, req, data)
         });
     });
     res.render('links/room', {room_id: room});

@@ -28,6 +28,7 @@
             <hr>                              
             <button class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal"><i class="fas fa-user"></i> Cambiar Nombre</button>
             <button class="btn btn-secondary btn-block" id="get_prev_end_game"><i class="fas fa-history"></i> Ver Jugada Anterior</button>
+            <button class="btn btn-secondary btn-block" id="_chat_open_button"><i class="fas fa-comments"></i> Chat</button>
             <a class="btn btn-dark btn-block" href="/" style="margin-bottom: 1em;"><i class="fas fa-sign-out-alt"></i> Salir</a>
           </div>
           <div class="col-md-6">
@@ -39,6 +40,9 @@
             </ul>
           </div>                      
         </div>
+      </div>
+      <div id="_chat_icon" style="position:fixed; bottom: 50px; z-index: 99; cursor: pointer; color: #79ABCD;">
+        <i class="fas fa-comments fa-5x"></i>
       </div>
     </div>
     <!-- #content -->
@@ -98,10 +102,7 @@
         </div>
       </div>
       <div class="modal-body">
-        <div style="max-height: 500px; overflow: auto;">
-
-        </div>
-        <div class="container" id="_end_game_list"></div>
+        <div class="container" style="max-height: 400px; overflow: auto;" id="_end_game_list"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="_next_game">Siguente Partida</button>
@@ -122,7 +123,7 @@
       </div>
       <div class="modal-body">
         <div class="container">
-          <img src="/pics/cards/card_back.svg" style="max-height: 500px; width: 100%; height: 100%;" id="_baraja_partida_img">
+          <img src="/pics/cards/card_back.svg" style="max-height: 400px; width: 100%; height: 100%;" id="_baraja_partida_img">
         </div>
       </div>
       <div class="modal-footer">
@@ -157,6 +158,29 @@
     </div>
   </div>
 </div>
+{{! Chat }}
+<div class="modal" id="chat" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">{{appName}} Chat</h5>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="container" style="min-height: 400px; max-height: 400px; overflow: auto;" id="_chat_messages"></div>
+      </div>
+      <div class="modal-footer">
+        <div class="input-group mb-3">
+          <textarea class="form-control" id="_chat_enter_text" style="resize: none;"></textarea>
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" id="_chat_enter_button"><i class="far fa-comment"></i> Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
     //NoSleep.js
     document.onreadystatechange = () => {
@@ -187,6 +211,7 @@
       $('#tocar').hide(); 
       $('#_comodin').hide();
       $('#get_prev_end_game').hide();
+      $('#_chat_icon').hide();
       //Var
       shows_who_knocks = true;    
     }
@@ -199,6 +224,7 @@
     let shows_who_knocks = true;
     let table_cards = [];
     let player_cards = [];
+    let chat = [];
 
     $(function (){
         ///Fontend Settings ->>
@@ -223,6 +249,36 @@
         const socket = io.connect('{{server_url}}', {
           reconnection: false,
         });
+
+        //Chat
+
+        $.fn.sendChatMessage = function() {
+          const message = $('#_chat_enter_text').val();
+          if(message !== '')
+          {
+            $('#_chat_enter_text').val('');
+            const player_name = $('#pn_li_' + socket.id).text();
+            if(player_name)
+            {
+              socket.emit('chat_message', {id: socket.id, name: player_name, message: message});
+            }
+            else
+            {
+              socket.emit('chat_message', {id: socket.id, name: null, message: message});
+            }
+          }         
+        }
+
+        $('#_chat_enter_text').on('keypress',function(e) {
+          if(e.which == 13) {
+            $(this).sendChatMessage();
+          }
+        });
+
+        $('#_chat_enter_button').on('click',function(e) {
+            $(this).sendChatMessage();
+        });
+        //
 
         //Pick a Card
         $.fn.selectPlayerCard = function (e)
@@ -687,7 +743,52 @@
             $('#winner_points').text('Puntos: ' + data.puntos);
             $('#modal5').modal('show');
           }
-        });   
+        });
+        socket.on('chat_messages', data => {
+          if(data)
+          {           
+            let i = chat.length;
+            if(i < 0)
+            {
+              i = 0;
+            }
+            for(i; i < data.length; i++)
+            {
+              if(socket.id != data[i].id)
+              {
+                if(data[i].name)
+                {
+                  $('#_chat_messages').append('<div style="width: 100%; text-align: left; padding: 1em 0.5em 1em 0.5em;"><b>' + data[i].name + '</b> - ' + data[i].id + '</br><p>' + data[i].message + '</p></div>');
+                }
+                else
+                {
+                  $('#_chat_messages').append('<div style="width: 100%; text-align: left; padding: 1em 0.5em 1em 0.5em;"><b>' + data[i].id + '</b></br><p>' + data[i].message + '</p></div>');
+                }
+              }
+              else
+              {
+                if(data[i].name)
+                {
+                  $('#_chat_messages').append('<div style="width: 100%; text-align: right; padding: 1em 0.5em 1em 0.5em;"><b>' + data[i].name + '</b> - ' + data[i].id + '</br><p>' + data[i].message + '</p></div>');
+                }
+                else
+                {
+                  $('#_chat_messages').append('<div style="width: 100%; text-align: right; padding: 1em 0.5em 1em 0.5em;"><b>' + data[i].id + '</b></br><p>' + data[i].message + '</p></div>');
+                }
+              }
+            }
+            //--------->
+            if(chat.length < data.length)
+            {
+              chat = data;
+              $('#_chat_icon').show();
+              $('#_chat_messages').scr
+              $('#_chat_icon').toggleClass('animate__animated animate__bounceIn', () => {
+                $(this).remove();
+              });
+            }
+          }
+        });
         //Send Data
         $('#init').on('click', () => {
             $('#init').hide();
@@ -736,6 +837,12 @@
             $('#_next_game').hide();
             $('#_next_game_title').text('Jugada Anterior');
             $('#modal3').modal('show');
+        });
+        $('#_chat_open_button').on('click', () => {
+            $('#chat').modal('show');
+        });
+        $('#_chat_icon').on('click', () => {
+            $('#chat').modal('show');
         });
     });
 </script>
