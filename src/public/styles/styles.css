@@ -112,7 +112,7 @@ hr {
   height: 350px;
   background-color: #f7f7f7;
   border-radius: 5px 0 0 0;
-  z-index: 50;
+  z-index: 99;
   font-size: 12px;
   border: 1px solid #212529;
 }
@@ -154,5 +154,9 @@ hr {
 
   .chat {
     width: 100% !important;
+  }
+
+  #_table_b_jugadas {
+    font-size: 10px;
   }
 }

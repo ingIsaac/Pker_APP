@@ -41,7 +41,7 @@
           </div>                      
         </div>
       </div>
-      <div id="_chat_icon" style="position:fixed; bottom: 40px; right: 20px; z-index: 99; cursor: pointer; color: #79ABCD; text-shadow: 2px 2px 4px #000000;">
+      <div id="_chat_icon" style="position:fixed; bottom: 40px; right: 20px; z-index: 98; cursor: pointer; color: #79ABCD; text-shadow: 2px 2px 4px #000000;">
         <i class="fas fa-comments fa-5x"></i>
       </div>
     </div>
@@ -159,7 +159,6 @@
         </div>
       </div>
       <div class="modal-footer">
-        <div class="fb-share-button" data-href="https://pkerapp.herokuapp.com/" data-layout="button_count" data-size="large"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fpkerapp.herokuapp.com%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Compartir</a></div>
         <a class="btn btn-dark" href="/">Salir</a>
       </div>
     </div>
@@ -189,7 +188,7 @@
         </div>
       </div>
       <div class="modal-body" style="overflow: auto; height: 400px;">
-        <table class="table" style="table-layout: auto;">
+        <table class="table" id="_table_b_jugadas" style="table-layout: auto;">
           <colgroup>
             <col span="1" style="width: 25%;">
             <col span="1" style="width: 50%;">
@@ -1119,7 +1118,7 @@
             $('#modal7').modal('show');
         });
         $('#pre_init').on('click', () => {
-            $('#modal5').modal('show');
+            $('#modal8').modal('show');
         });
     });
 </script>
