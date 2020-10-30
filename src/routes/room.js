@@ -854,7 +854,7 @@ module.exports = function(app, IO) {
             const Rooms = IO.sockets.adapter.rooms[room];
             if(Rooms)
             {
-                if(Rooms.length < 8)
+                if(Rooms.length < process.env._APP_MAX_PLAYER_PER_ROOM)
                 {
                     joinPlayerRoom(IO, socket, room)
                 }        
