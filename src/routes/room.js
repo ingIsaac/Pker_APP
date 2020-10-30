@@ -1,4 +1,3 @@
-const { json } = require('body-parser');
 const express = require('express');
 const router = express.Router();
 const cards = [
@@ -458,7 +457,7 @@ function getOrderType(hand, Room)
             if(v.value === 10 && _s <= 1)
             {
                 g_type = 'Flor Imperial';
-                r += 500;
+                r += 200;
             }
         }
     }
@@ -594,7 +593,7 @@ function getRepetedValues(hand, Room)
         else if(n[0].sub_hand.length == 4)
         {
             r += 800;
-            g_type = 'Poker'
+            g_type = 'Póker'
         }
         else if(n[0].sub_hand.length == 3)
         {
@@ -604,7 +603,7 @@ function getRepetedValues(hand, Room)
         else if(n[0].sub_hand.length == 2)
         {
             r += 100;
-            g_type = 'Un par'
+            g_type = 'Un Par'
         }
 
         for(let i=0; i < n[0].sub_hand.length; i++)
@@ -692,19 +691,36 @@ function nextGame(IO, room, app)
         {
             Room.settings.game_in_course = true;
             Room.settings.j_jugados++;
-            const comodin = cards.find(c => c.wildcard_value === Room.settings.j_jugados);
-            Room.settings.comodin = comodin.img;
+            if(Room.settings.j_jugados > 13) //Reset Count
+            {
+                Room.settings.j_jugados = 0;
+            }
+            if(Room.settings.j_jugados > 0) //Set New Wildcard
+            {
+                const comodin = cards.find(c => c.wildcard_value === Room.settings.j_jugados);
+                Room.settings.comodin = comodin.img;
+            }           
             IO.to(room).emit('send_next_game');
             selectSplitDeckPlayer(IO, room, app);
         }
     }
 }
 
-function selectSplitDeckPlayer(IO, room, app)
+function selectSplitDeckPlayer(IO, room, app, data)
 {
     const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {       
+        //Set Number of Widows
+        if(data)
+        {
+            const n_viudas = parseInt(data);
+            if(n_viudas > 0)
+            {
+                Room.settings.widows = n_viudas;
+            }
+        }
+
         //Set Pivote
         const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
         if(Room.settings.pivote == null)
@@ -882,9 +898,9 @@ module.exports = function(app, IO) {
         }) 
         
         //Get Data
-        socket.on('init', () => {
+        socket.on('init', data => {
             console.log(socket.handshake.query.r);
-            selectSplitDeckPlayer(IO, socket.handshake.query.r, app)
+            selectSplitDeckPlayer(IO, socket.handshake.query.r, app, data)
         });
         socket.on('nombre', nombre => {
             socket.nombre = nombre;

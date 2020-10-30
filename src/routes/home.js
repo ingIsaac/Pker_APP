@@ -31,12 +31,12 @@ module.exports = function(app, IO)
     }
 
     router.get('/', (req, res) => {
-        res.render('links/home');
+        res.render('links/home', {online: Object.keys(IO.sockets.sockets).length});
     });
     
     router.get('/created', (req, res) => {
         const r = req.query.r;
-        res.render('links/home', {url: process.env._APP_URL, room: r});
+        res.render('links/home', {url: process.env._APP_URL, room: r, online: Object.keys(IO.sockets.sockets).length});
     });
     
     router.post('/create', (req, res) => {
