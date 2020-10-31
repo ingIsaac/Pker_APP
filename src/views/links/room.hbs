@@ -1,3 +1,9 @@
+<div class="loader" id="loader">
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); transform: translate3d(-50%,-50%,0); color:#ffffff">
+    <img src="/pics/logon.svg" width="120" height="120">
+    <div style="margin: 1em 0 0 0.5em;"><h5>Cargando...</h5></div>
+  </div>
+</div>
 <div class="container" style="margin: 0 auto; padding: 0;">
     <div class="d-flex" id="wrapper">
     <!-- Sidebar -->
@@ -41,7 +47,7 @@
           </div>                      
         </div>
       </div>
-      <div id="_chat_icon" style="position:fixed; bottom: 40px; right: 20px; z-index: 98; cursor: pointer; color: #79ABCD; text-shadow: 2px 2px 4px #000000;">
+      <div id="_chat_icon" style="position:fixed; bottom: 40px; right: 20px; z-index: 98; cursor: pointer; color: #79ABCD; text-shadow: 2px 2px 4px #000000;" hidden>
         <i class="fas fa-comments fa-5x"></i>
       </div>
     </div>
@@ -204,7 +210,7 @@
           <tbody>
             <tr>
               <td>Escalera Real o Flor Imperial</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/10_of_spades.svg" width="48" height="64">
                 <img src="/pics/cards/jack_of_spades.svg" width="48" height="64">
                 <img src="/pics/cards/queen_of_spades.svg" width="48" height="64">
@@ -215,7 +221,7 @@
             </tr>
             <tr>
               <td>Quintilla</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/king_of_diamonds.svg" width="48" height="64">
                 <img src="/pics/cards/king_of_clubs.svg" width="48" height="64">
                 <img src="/pics/cards/king_of_hearts.svg" width="48" height="64">
@@ -226,7 +232,7 @@
             </tr>
             <tr>
               <td>Escalera de Color o Flor</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/5_of_clubs.svg" width="48" height="64">
                 <img src="/pics/cards/6_of_clubs.svg" width="48" height="64">
                 <img src="/pics/cards/7_of_clubs.svg" width="48" height="64">
@@ -237,7 +243,7 @@
             </tr>
             <tr>
               <td>Póker</td>
-               <td><div style="display: flex;">
+               <td><div class="card_showcase">
                 <img src="/pics/cards/10_of_hearts.svg" width="48" height="64">
                 <img src="/pics/cards/10_of_spades.svg" width="48" height="64">
                 <img src="/pics/cards/10_of_diamonds.svg" width="48" height="64">
@@ -248,7 +254,7 @@
             </tr>
             <tr>
               <td>Full House</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/7_of_clubs.svg" width="48" height="64">
                 <img src="/pics/cards/7_of_diamonds.svg" width="48" height="64">
                 <img src="/pics/cards/7_of_hearts.svg" width="48" height="64">
@@ -259,7 +265,7 @@
             </tr>
             <tr>
               <td>Color</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/2_of_hearts.svg" width="48" height="64">
                 <img src="/pics/cards/6_of_hearts.svg" width="48" height="64">
                 <img src="/pics/cards/9_of_hearts.svg" width="48" height="64">
@@ -270,7 +276,7 @@
             </tr>
             <tr>
               <td>Escalera</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/ace_of_spades.svg" width="48" height="64">
                 <img src="/pics/cards/2_of_clubs.svg" width="48" height="64">
                 <img src="/pics/cards/3_of_diamonds.svg" width="48" height="64">
@@ -281,7 +287,7 @@
             </tr>
             <tr>
               <td>Tercia</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/jack_of_spades.svg" width="48" height="64">
                 <img src="/pics/cards/jack_of_clubs.svg" width="48" height="64">
                 <img src="/pics/cards/jack_of_hearts.svg" width="48" height="64">
@@ -292,7 +298,7 @@
             </tr>
             <tr>
               <td>Dos Pares</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/4_of_clubs.svg" width="48" height="64">
                 <img src="/pics/cards/4_of_diamonds.svg" width="48" height="64">
                 <img src="/pics/cards/7_of_hearts.svg" width="48" height="64">
@@ -303,7 +309,7 @@
             </tr>
             <tr>
               <td>Un Par</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/8_of_spades.svg" width="48" height="64">
                 <img src="/pics/cards/8_of_diamonds.svg" width="48" height="64">
                 <img src="/pics/cards/9_of_hearts.svg" width="48" height="64">
@@ -314,7 +320,7 @@
             </tr>
             <tr>
               <td>Carta Mayor</td>
-              <td><div style="display: flex;">
+              <td><div class="card_showcase">
                 <img src="/pics/cards/ace_of_hearts.svg" width="48" height="64">
                 <img src="/pics/cards/10_of_clubs.svg" width="48" height="64">
                 <img src="/pics/cards/3_of_hearts.svg" width="48" height="64">
@@ -437,6 +443,11 @@
             document.removeEventListener('click', enableNoSleep, false);
             ns.enable();
           }, false);
+          //-->
+          setTimeout(() => {
+            $('#loader').hide();
+            $('#_chat_icon').attr('hidden', false);
+          }, 5000);
       }
     };
 

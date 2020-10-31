@@ -11,14 +11,15 @@
                             <button type="button" class="btn btn-success form-control" style="margin-top: 1em;" onClick="copy()"><i class="far fa-copy"></i> Copiar Enlace</button>
                         {{else}}
                             <form action="/create" method="post">
-                                <button type="submit" class="btn btn-primary form-control"><i class="fas fa-link"></i> Generar Enlace</button> 
+                                <button type="submit" class="btn btn-primary form-control" style="margin-top: 1em;"><i class="fas fa-link"></i> Generar Enlace</button> 
                             </form>
                         {{/if}}                       
                     </div>
-              </div>
-              <div style="color: #ffffff; text-align: center; margin-top: 1em;">
-                <p>Jugadores en Linea: {{online}}</p>
-                <div class="fb-like" data-href="https://pkerapp.herokuapp.com/" data-width="" data-layout="button_count" data-action="like" data-size="large" data-share="true"></div>              
+                    <hr>
+                    <div style="text-align: center; margin-bottom: 1em;">
+                        <p>Jugadores en Linea: {{online}}</p>
+                        <div class="fb-like" data-href="https://pkerapp.herokuapp.com/" data-width="" data-layout="button_count" data-action="like" data-size="large" data-share="true"></div>              
+                    </div>
               </div>
          </div>
     </div>
