@@ -147,7 +147,7 @@ function setupGame(IO, room, app)
                 {
                     k.juego.hand.pop();
                     k.juego.hand.push(k.juego.extra);
-                }                             
+                }                                 
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -479,7 +479,7 @@ function getRepetedColor(hand, Room)
                 {
                     hand[i].value = u.value;
                     hand[i].type = u.type;
-                    hand[i].type = u.type_value;
+                    hand[i].type_value = u.type_value;
                 }
                 r += (hand[i].value + hand[i].type_value);
             }
@@ -848,6 +848,15 @@ function getChatMessages(IO, room, app)
     }
 }
 
+function refreshPlayerNameList(IO, room, app, socket)
+{
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {    
+        IO.to(room).emit('change_player_name', {id: socket.id, nombre: socket.nombre});
+    }
+}
+
 //IO Request Handler
 module.exports = function(app, IO) {
     //Get all players connected
@@ -899,12 +908,11 @@ module.exports = function(app, IO) {
         
         //Get Data
         socket.on('init', data => {
-            console.log(socket.handshake.query.r);
             selectSplitDeckPlayer(IO, socket.handshake.query.r, app, data)
         });
         socket.on('nombre', nombre => {
             socket.nombre = nombre;
-            socket.emit('change_player_name', {id: socket.id, nombre: socket.nombre}); 
+            refreshPlayerNameList(IO, socket.handshake.query.r, app, socket);
         });
         socket.on('end_turn', () => {
             nextTurn(IO, socket.handshake.query.r, app, socket);
