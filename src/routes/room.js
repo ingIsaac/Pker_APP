@@ -266,6 +266,7 @@ function takeAll(IO, room, app, socket)
 
         socket.emit('set_player_cards', socket.juego);
         IO.to(room).emit('set_table_cards', Room.settings);
+        IO.to(room).emit('take_all_message', {id: socket.id, nombre: socket.nombre});
     }
 }
 

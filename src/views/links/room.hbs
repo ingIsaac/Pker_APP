@@ -687,7 +687,10 @@
         socket.on('change_player_name', (data) => {
           if(data)
           {
-            $('#_j_name').text(data.nombre).removeAttr('hidden');
+            if(socket.id == data.id)
+            {
+              $('#_j_name').text(data.nombre).removeAttr('hidden');
+            }
             $('#pn_li_' + data.id).text(data.nombre).removeAttr('hidden');
           }
         });
@@ -1047,16 +1050,30 @@
             if(chat.length < data.length)
             {
               chat = data;
-              if($('#chat').is(':visible') == false)
+              //Refresh Scroll Position
+              const messages_area = document.getElementById('_chat_messages');
+              messages_area.scrollTop = messages_area.scrollHeight;
+              //Send Animation
+              $('#_chat_icon').addClass('animate__animated animate__bounceIn animate__faster');
+              setTimeout(() => {
+                $('#_chat_icon').removeClass('animate__animated animate__bounceIn animate__faster');
+              }, 500)
+            }
+          }
+        });
+        socket.on('take_all_message', data => {
+          if(data)
+          {
+            if(socket.id != data.id)
+            {
+              if(data.nombre)
               {
-                $('#_chat_icon').show();
-                $('#_chat_icon').toggleClass('animate__animated animate__bounceIn', () => {
-                  $(this).remove();
-                });
-              }   
-              $('#_chat_messages').animate({
-                  scrollTop: $('#_chat_messages').prop("scrollHeight")
-              }, 1000);
+                toastr.info(data.nombre + ' - ' + data.id + ' ah tomado todas las cartas de la mesa.');
+              }
+              else
+              {
+                toastr.info(data.id + ' ah tomado todas las cartas de la mesa.');
+              }
             }
           }
         });
@@ -1118,11 +1135,12 @@
             {
               socket.emit('get_chat_message');
             }
-            $('#_chat_icon').hide();
             $('#chat').attr('hidden', false);
+            //Refresh Scroll Position
+            const messages_area = document.getElementById('_chat_messages');
+            messages_area.scrollTop = messages_area.scrollHeight;
         });
         $('#_close_chat_button').on('click', () => {
-            $('#_chat_icon').show();
             $('#chat').attr('hidden', true);
         });
         $('#get_table_guide').on('click', () => {
