@@ -640,7 +640,7 @@ function getRepetedValues(hand, Room)
      
         //---------------------------------------->
 
-        if(r == 600)
+        if(r >= 600)
         {
             g_type = 'Full House'
         }
