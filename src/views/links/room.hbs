@@ -1,3 +1,4 @@
+{{! Loader }}
 <div class="loader" id="loader">
   <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); transform: translate3d(-50%,-50%,0); color:#ffffff">
     <img src="/pics/logon.svg" width="120" height="120">
@@ -67,7 +68,7 @@
         </button>
       </div>
       <div class="modal-body">
-        <input type="text" id="t_nombre" style="text-transform:uppercase" class="form-control">
+        <input type="text" id="t_nombre" style="text-transform:uppercase" class="form-control" maxlength="15">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="nombre">Guardar</button>
@@ -422,6 +423,22 @@
     </div>
   </div>
 </div>
+{{! Disconnect }}
+<div class="modal" id="modal9" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-body" style="text-align: center;">
+        <h5>Lo sentimos, haz perdido la conexión con el servidor...</h5>
+        <div style="margin-top: 1em;">
+          <i class="fas fa-dizzy fa-3x"></i>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-danger" href="/">Salir</a>
+      </div>
+    </div>
+  </div>
+</div>
 {{! Chat }}
 <div class="chat" id="chat" hidden>
   <div style="height: 30px; background-color: #212529; padding: 3px; text-align: right; color: #DFDFDF;"><i style="cursor: pointer;" id="_close_chat_button" class="fas fa-times fa-2x"></i></div>
@@ -443,7 +460,7 @@
             document.removeEventListener('click', enableNoSleep, false);
             ns.enable();
           }, false);
-          //-->
+          //Page Loader
           setTimeout(() => {
             $('#loader').hide();
             $('#_chat_icon').attr('hidden', false);
@@ -1076,6 +1093,9 @@
               }
             }
           }
+        });
+        socket.on('disconnect', () => {
+          $('#modal9').modal('show');
         });
         //Send Data
         $('#init').on('click', () => {

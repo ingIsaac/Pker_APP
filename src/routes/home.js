@@ -26,7 +26,10 @@ module.exports = function(app, IO)
                     v = Rooms.filter(r => r.id != Rooms[i].id)
                 }     
             }    
-            app.locals.Rooms = v;
+            if(v.length > 0)
+            {
+                app.locals.Rooms = v;
+            }
         }
     }
 
