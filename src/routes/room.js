@@ -141,13 +141,14 @@ function setupGame(IO, room, app)
                 hand.push(deck[v]);
             }
             k = IO.sockets.connected[u[i]];
-            if(k){
+            if(k)
+            {               
                 k.juego.hand = hand; 
                 if(k.juego.extra != null)
                 {
                     k.juego.hand.pop();
                     k.juego.hand.push(k.juego.extra);
-                }                                 
+                }                          
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -373,6 +374,12 @@ function isComodin(card, Room)
 
 function getOrderType(hand, Room)
 {
+    const w = hand.filter(c => c.wildcard_value === 0 || c.wildcard_value === Room.settings.j_jugados);
+    if(w.length > 2)
+    {
+        return 0;
+    }
+    //-----------------> Wilcard Filter
     let r = 400; 
     let g_type = '';     
     let v = hand[0];
@@ -386,7 +393,7 @@ function getOrderType(hand, Room)
         {
             if(s >= 14 && hand[i].value < s)
             {
-                k = hand[i].value - 1;
+                k = (2 - i);
             }          
         }
         if(hand[i].value !== (k+i))
@@ -419,7 +426,7 @@ function getOrderType(hand, Room)
                     {
                         if(!isComodin(hand[v], Room))
                         {
-                            hand[i].value = hand[v].value - 1;              
+                            hand[i].value = hand[v].value - v;              
                             break;
                         }
                     }
@@ -455,7 +462,7 @@ function getOrderType(hand, Room)
         {
             r += 500;
             g_type = 'Flor';
-            if(v.value === 10 && _s <= 1)
+            if(v.value === 10 && _s <= 1) //-----------------> Wilcard Filter
             {
                 g_type = 'Flor Imperial';
                 r += 200;
@@ -467,6 +474,12 @@ function getOrderType(hand, Room)
 
 function getRepetedColor(hand, Room)
 {
+    const w = hand.filter(c => c.wildcard_value === 0 || c.wildcard_value === Room.settings.j_jugados);
+    if(w.length > 2)
+    {
+        return 0;
+    }
+    //-----------------> Wilcard Filter
     let r = 0;
     let u = null;
     let g_type = '';
