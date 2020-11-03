@@ -607,7 +607,7 @@ function getRepetedValues(hand, Room)
         else if(n[0].sub_hand.length == 4)
         {
             r += 800;
-            g_type = 'Póker'
+            g_type = 'Poker'
         }
         else if(n[0].sub_hand.length == 3)
         {
