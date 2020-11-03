@@ -6,10 +6,8 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const colors = require('colors');
 const uid = require('uid');
-const { setInterval } = require('timers');
 require('dotenv').config({path: path.join(__dirname, '.env')});
 
-/*setting
 app.use (function (req, res, next) { //HTTPS ReDirect
     if (req.get('X-Forwarded-Proto')=='https' || req.hostname == 'localhost') {
         next();
@@ -17,7 +15,6 @@ app.use (function (req, res, next) { //HTTPS ReDirect
         res.redirect('https://' + req.hostname + req.url);
     }
 });
-*/
     
 app.set('port', process.env.PORT || process.env._APP_PORT);
 app.use(express.static(path.join(__dirname, '/public')))
