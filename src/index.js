@@ -8,6 +8,15 @@ const colors = require('colors');
 const uid = require('uid');
 require('dotenv').config({path: path.join(__dirname, '.env')});
 
+app.get ('/*', function (req, res, next){
+    if (req.headers.host.match(/^www\./)) {
+        res.writeHead (301, {'Location': process.env._APP_URL});
+    }
+    else {    
+        return next();
+    }    
+});
+
 app.use (function (req, res, next) { //HTTPS ReDirect
     if (req.get('X-Forwarded-Proto')=='https' || req.hostname == 'localhost') {
         next();
