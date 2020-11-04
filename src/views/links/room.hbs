@@ -873,7 +873,7 @@
                 const t = $('<div class="container" style="display: inline-flex; margin-bottom: 1em;"></div>');
                 for(let v=0; v < data[i].hand.length; v++)
                 {
-                  $(t).append('<div class="col-sm"><img src="/pics/cards/' + data[i].hand[v].img + '" style="width: 100%; height: 100%;"></div>');
+                  $(t).append('<div class="col-sm" style="padding: 0 0.1em 0 0.1em; padding-top: 0;"><img src="/pics/cards/' + data[i].hand[v].img + '" style="width: 100%; height: 100%;"></div>');
                 }
                 $('#_end_game_list').append(t);
               }
