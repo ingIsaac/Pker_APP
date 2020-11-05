@@ -1071,10 +1071,10 @@
               const messages_area = document.getElementById('_chat_messages');
               messages_area.scrollTop = messages_area.scrollHeight;
               //Send Animation
-              $('#_chat_icon').addClass('animate__animated animate__bounceIn animate__faster');
+              $('#_chat_icon').addClass('animate__animated animate__heartBeat animate__faster');
               setTimeout(() => {
-                $('#_chat_icon').removeClass('animate__animated animate__bounceIn animate__faster');
-              }, 500)
+                $('#_chat_icon').removeClass('animate__animated animate__heartBeat animate__faster');
+              }, 1000)
             }
           }
         });
