@@ -142,13 +142,13 @@ function setupGame(IO, room, app)
             }
             k = IO.sockets.connected[u[i]];
             if(k)
-            {               
+            {                              
                 k.juego.hand = hand; 
                 if(k.juego.extra != null)
                 {
                     k.juego.hand.pop();
                     k.juego.hand.push(k.juego.extra);
-                }                          
+                }                           
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -631,7 +631,11 @@ function getRepetedValues(hand, Room)
         {
             r += 300;
             r += 200;
-            r += n[0].sub_hand[0].value; //
+            //Plus Full House
+            for(let i=0; i < n[0].sub_hand.length; i++)
+            {
+                r += n[0].sub_hand[i].value + n[0].sub_hand[i].type_value;
+            }
         }
         else if(n[0].sub_hand.length == 2)
         {
@@ -644,7 +648,11 @@ function getRepetedValues(hand, Room)
         {
             r += 300;
             r += 200;
-            r += n[1].sub_hand[0].value; //
+            //Plus Full House
+            for(let i=0; i < n[1].sub_hand.length; i++)
+            {
+                r += n[1].sub_hand[i].value + n[1].sub_hand[i].type_value;
+            }
         }
         else if(n[1].sub_hand.length == 2)
         {
@@ -653,6 +661,27 @@ function getRepetedValues(hand, Room)
      
         //---------------------------------------->
 
+        //Plus Dos Pares
+        if(n[0].sub_hand.length == 2 && n[1].sub_hand.length == 2)
+        {
+            if(n[0].sub_hand[0].value > n[1].sub_hand[0].value)
+            {
+                for(let i=0; i < n[0].sub_hand.length; i++)
+                {
+                    r += n[0].sub_hand[i].value + n[0].sub_hand[i].type_value;
+                }
+            }
+            else
+            {
+                for(let i=0; i < n[1].sub_hand.length; i++)
+                {
+                    r += n[1].sub_hand[i].value + n[1].sub_hand[i].type_value;
+                }
+            }
+        }   
+
+        //---------------------------------------->
+ 
         if(r >= 600)
         {
             g_type = 'Full House'
@@ -660,18 +689,6 @@ function getRepetedValues(hand, Room)
         else
         {
             g_type = 'Dos Pares'
-        }
-
-        //---------------------------------------->
-
-        for(let i=0; i < n[0].sub_hand.length; i++)
-        {
-            r += n[0].sub_hand[i].value + n[0].sub_hand[i].type_value;
-        }
-
-        for(let i=0; i < n[1].sub_hand.length; i++)
-        {
-            r += n[1].sub_hand[i].value + n[1].sub_hand[i].type_value;
         }
     }
     else if(n[0].sub_hand.length == 0 && n[1].sub_hand.length == 0)
