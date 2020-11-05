@@ -460,7 +460,7 @@ function getOrderType(hand, Room)
         }
         if(!hand.find(c => c.type !== v.type))
         {
-            r += 500;
+            r += 400;
             g_type = 'Flor';
             if(v.value === 10 && _s <= 1) //-----------------> Wilcard Filter
             {
@@ -601,12 +601,12 @@ function getRepetedValues(hand, Room)
     {
         if(n[0].sub_hand.length == 5)
         {
-            r += 1000;
+            r += 900;
             g_type = 'Quintilla'       
         }
         else if(n[0].sub_hand.length == 4)
         {
-            r += 800;
+            r += 700;
             g_type = 'Poker'
         }
         else if(n[0].sub_hand.length == 3)
