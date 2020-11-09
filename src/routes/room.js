@@ -142,13 +142,13 @@ function setupGame(IO, room, app)
             }
             k = IO.sockets.connected[u[i]];
             if(k)
-            {                              
+            {                             
                 k.juego.hand = hand; 
                 if(k.juego.extra != null)
                 {
                     k.juego.hand.pop();
                     k.juego.hand.push(k.juego.extra);
-                }                           
+                }                                
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -388,7 +388,16 @@ function getOrderType(hand, Room)
     let q = 0;
     let k = v.value;
     for(let i=0; i < hand.length; i++)
-    {       
+    {          
+        if(s >= 14)
+        { 
+            if(i != 1 && i != hand.length - 2)
+            {
+                r = 0;
+                break;
+            }
+        }
+        //--------------------------------->   
         if(!isComodin(hand[i], Room))
         {
             if(s >= 14 && hand[i].value < s)
