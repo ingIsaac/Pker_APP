@@ -754,15 +754,15 @@ function selectSplitDeckPlayer(IO, room, app, data)
     if(Room)
     {       
         //Set Number of Widows
-        if(Room.settings.widows > 0)
-        {
-            return
-        }
-
-        Room.settings.widows = 2;
-
         if(data)
         {
+            if(Room.settings.widows > 0)
+            {
+                return
+            }
+
+            Room.settings.widows = 2;
+
             const n_viudas = parseInt(data);
             if(n_viudas > 0)
             {
