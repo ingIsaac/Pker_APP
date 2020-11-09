@@ -754,6 +754,13 @@ function selectSplitDeckPlayer(IO, room, app, data)
     if(Room)
     {       
         //Set Number of Widows
+        if(Room.settings.widows > 0)
+        {
+            return
+        }
+
+        Room.settings.widows = 2;
+
         if(data)
         {
             const n_viudas = parseInt(data);
@@ -783,6 +790,7 @@ function selectSplitDeckPlayer(IO, room, app, data)
         }
         const socket = IO.sockets.connected[Room.settings.pivote];
         IO.to(room).emit('_send_split_deck_request', {id: socket.id, nombre: socket.nombre});
+        IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
     }
 }
 

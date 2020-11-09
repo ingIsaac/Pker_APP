@@ -952,6 +952,8 @@
         socket.on('_send_split_deck_request', data => {
           if(data)
           {
+            $('#modal8').modal('hide');
+            //----------------------------->
             if(socket.id == data.id)
             {
               $('#_partir_baraja').show();
