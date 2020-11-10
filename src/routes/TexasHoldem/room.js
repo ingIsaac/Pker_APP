@@ -768,7 +768,7 @@ module.exports = function(app, IO) {
     });
 
     //Route
-    router.get('/LaViuda/room', (req, res) => {
+    router.get('/TexasHoldem/room', (req, res) => {
         const room = req.query.r;
         const Rooms = req.app.locals.Rooms;
 
@@ -794,7 +794,7 @@ module.exports = function(app, IO) {
                 }                    
             }  
         }  
-        res.render('links/LaViuda/room', {room: room});
+        res.render('links/TexasHoldem/room', {room: room});
     });
 
     return router;
