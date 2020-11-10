@@ -914,6 +914,10 @@ module.exports = function(app, IO) {
 
     //User Connection
     IO.on('connection', (socket) => {
+        if(socket.handshake.headers.referer.search('LaViuda') < 0)
+        {
+            return
+        }
         //Add User to Players
         const t = Players.find(player => {
             if(player)

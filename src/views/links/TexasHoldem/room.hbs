@@ -42,8 +42,8 @@
           <div class="col-md-6">
             <ul id="player_data" class="list-group">
               <li class="list-group-item"><b>Cartas Iniciales:</b> <div><img class="img-fluid" id="_carta_inicial_1" alt="Responsive image" width="80" height="40" src=""><img class="img-fluid" id="_carta_inicial_2" style="margin-left: 1em;" alt="Responsive image" width="80" height="40" src=""></div></li>
-              <li class="list-group-item"><b>Fichas:</b> <p id="p_fichas"></p></li>
-              <li class="list-group-item"><b>Puntos:</b> <p id="p_puntos"></p></li>
+              <li class="list-group-item"><b>Fichas: $</b><p id="p_fichas"></p></li>
+              <li class="list-group-item"><b>Puntos: </b><p id="p_puntos"></p></li>
             </ul>
           </div>                      
         </div>
@@ -336,6 +336,27 @@
     </div>
   </div>
 </div>
+{{! Asignar Monto Apuesta Minima }}
+<div class="modal" id="modal8" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Asignar Monto de Apuesta Minima</h5>
+        </div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="number" id="_monto_apuesta_minima" class="form-control" maxlength="4">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal" id="init">Iniciar</button>
+      </div>
+    </div>
+  </div>
+</div>
 {{! Disconnect }}
 <div class="modal" id="modal9" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
   <div class="modal-dialog" role="document">
@@ -389,7 +410,7 @@
       $('#c_table').empty();
       $('#c_player').empty();
       $('#players').children().css('background', '#F0EFEF');
-      for(let i=0; i < 3; i++)
+      for(let i=0; i < 5; i++)
       {
           $('#c_table').append('<div class="col-sm" style="padding: 0 0.1em 0 0.1em; padding-top: 0;"><img src="/pics/cards/card_back.svg" style="width: 100%; height: 100%;"></div>');
       }
@@ -628,7 +649,7 @@
         socket.on('init', () => {
             //Disable Init button
             $('#pre_init').hide();              
-            $('#init').hide();
+            $('#modal8').modal('hide');
         });
         socket.on('set_player_cards', (data) => {
             $('#c_player').empty();
@@ -869,8 +890,8 @@
         //Send Data
         $('#init').on('click', () => {
             $('#pre_init').hide();
-            const n_viudas = $('#_numero_viudas').val();
-            socket.emit('init', n_viudas);
+            const apuesta_minima = $('#_monto_apuesta_minima').val();
+            socket.emit('init', apuesta_minima);
         });
         $('#end_turn').on('click', () => {
             $('#end_turn').hide();

@@ -63,7 +63,7 @@ function getRandomInt(min, max)
 function joinPlayerRoom(IO, socket, room, chips)
 {
     socket.join(room);
-    socket.juego = {points: 0, chips: chips, hand: []};
+    socket.juego = {points: 0, bet: 0, chips: chips, hand: []};
     IO.to(room).emit('connected', socket.id + " se ha unido a esta partida.");
 }
 
@@ -88,7 +88,7 @@ function sendPlayerList(IO, room)
     }
 }
 
-function setupGame(IO, room, app)
+function setupGame(IO, room, app, data)
 {   
     let deck = []
     let player_count = 0
@@ -136,17 +136,52 @@ function setupGame(IO, room, app)
             //Set table Cards
             Room.settings.c_table = [];
             for(let i=(player_count*2); i < ((player_count*2)+5); i++)
-            {
-                Room.settings.c_table.push(deck[i]);                
+            {            
+                Room.settings.c_table.push({card: deck[i], phase: 1});                
             }
+            Room.settings.c_table[3].phase = 2;
+            Room.settings.c_table[4].phase = 3;
             //Other Settings
-            Room.settings.p_turn = Room.settings.pivote;       
+            const min = parseInt(data);
+            Room.settings.pool = 0;
+            Room.settings.game_phase = 1;
+            Room.settings.n_turn = 0;
+            Room.settings.min_bet = min > 0 ? min : 0;
+            Room.settings.max_bet = min_bet*2; 
+            Room.settings.dealer = setNewDealer(IO, room, Room.settings.dealer);      
             //Send Data
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
-            IO.to(room).emit('room_data', Room.settings);
+            nextTurn(IO, room, app, {id: Room.settings.dealer})
             IO.to(room).emit('init');
         }
     }
+}
+
+function setNewDealer(IO, room, dealer)
+{
+    let r = null;
+    if(IO.sockets.adapter.rooms[room])
+    {
+        const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+
+        if(!dealer)
+        {
+            r = u[getRandomInt(0, u.length)]
+        }
+        else
+        {
+            const t = u.findIndex(p => p == dealer)
+            if(t < u.length-1)
+            {
+                r = u[t+1];
+            }
+            else
+            {
+                r = u[0];
+            }
+        }       
+    }
+    return r;
 }
 
 function nextTurn(IO, room, app, socket)
@@ -167,7 +202,57 @@ function nextTurn(IO, room, app, socket)
         {
             Room.settings.p_turn = next;
             Room.settings.n_turn += 1;
+            if(Room.settings.n_turn == u.length)
+            {
+                changeGamePhase(IO, room, app);
+            }
             IO.to(room).emit('room_data', Room.settings);
+        }
+    }
+}
+
+function changeGamePhase(IO, room, app)
+{
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {
+        if(Room.settings.game_phase <= 3)
+        {
+            Room.settings.game_phase += 1;
+            const phase = Room.settings.game_phase;
+            Room.settings.c_table[phase+1].phase = phase;
+        }
+        else
+        {
+            endGame(IO, room, app);
+        }
+    }
+}
+
+function getPlayerResponse(IO, room, app, socket, data)
+{
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {
+        const max_bet = Room.settings.max_bet;
+        if(socket.bet < max_bet && data === 0)
+        {
+            Room.settings.max_bet = data;
+            Room.settings.pool += data;
+            if(socket.chips < data)
+            {
+                lose(IO, room, app, socket)
+            }
+            else
+            {
+                socket.chips -= data;
+                socket.bet = data;
+                nextTurn(IO, room, app, socket);
+            }
+        }
+        else
+        {
+            nextTurn(IO, room, app, socket);
         }
     }
 }
@@ -215,10 +300,10 @@ function endGame(IO, room, app)
             });
             if(scores.length > 0)
             {
-                const _k = IO.sockets.connected[scores[scores.length-1].id];
+                const _k = IO.sockets.connected[scores[0].id];
                 if(_k.juego.chips > 0)
                 {
-                    _k.juego.chips -= 1;
+                    _k.juego.chips += Room.settings.pool;
                 }
                 _k.emit('player_data', _k.juego);                                          
             }
@@ -675,6 +760,10 @@ module.exports = function(app, IO) {
 
     //User Connection
     IO.on('connection', (socket) => {
+        if(socket.handshake.headers.referer.search('TexasHoldem') < 0)
+        {
+            return
+        }
         //Add User to Players
         const t = Players.find(player => {
             if(player)
@@ -719,41 +808,26 @@ module.exports = function(app, IO) {
         
         //Get Data
         socket.on('init', data => {
-            selectSplitDeckPlayer(IO, socket.handshake.query.r, app, data)
+            setupGame(IO, socket.handshake.query.r, app, data)
         });
         socket.on('nombre', nombre => {
             socket.nombre = nombre;
             refreshPlayerNameList(IO, socket.handshake.query.r, app, socket);
         });
-        socket.on('end_turn', () => {
-            nextTurn(IO, socket.handshake.query.r, app, socket);
-        });
-        socket.on('tocar', () => {
-            tocar(IO, socket.handshake.query.r, app, socket)
-        });
         socket.on('pick', data => {
             pickCard(IO, socket.handshake.query.r, app, socket, data);
-        });
-        socket.on('take_all', () => {
-            takeAll(IO, socket.handshake.query.r, app, socket)
         });
         socket.on('swap_card', data => {
             swapCard(socket, data);
         }); 
-        socket.on('viuda_b', () => {
-            buyWidow(IO, socket.handshake.query.r, app, socket)
-        }); 
         socket.on('request_next_game', () => {
-            nextGame(IO, socket.handshake.query.r, app)
-        });
-        socket.on('request_split_deck', () => {
-            splitDeck(IO, socket.handshake.query.r, app, socket)
-        });
+            setupGame(IO, socket.handshake.query.r, app, data)
+        });   
+        socket.on('get_player_response', () => {
+            getPlayerResponse(IO, socket.handshake.query.r, app, socket, data)
+        });     
         socket.on('lose', () => {
             lose(IO, socket.handshake.query.r, app, socket)
-        });
-        socket.on('get_knock_msg', data => {
-            knockMsg(IO, socket.handshake.query.r, data)
         });
         socket.on('reload_player_data', () => {
             socket.emit('player_data', socket.juego); 
