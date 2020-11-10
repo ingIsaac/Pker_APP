@@ -1,0 +1,39 @@
+<div class="container p-4">
+    <div class="row">
+        <div class="col-md-5 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Crear Partida</h2> 
+                </div>
+                <div class="card-body" style="text-align: center;">
+                    {{#if room}}
+                        <a id="_url" href="{{url}}/TexasHoldem/room?r={{room}}">{{url}}/TexasHoldem/room?r={{room}}</a>
+                        <button type="button" class="btn btn-success form-control" style="margin-top: 1em;" onClick="copy()"><i class="far fa-copy"></i> Copiar Enlace</button>
+                    {{else}}
+                        <form action="/TexasHoldem/create" method="post">
+                            <button type="submit" class="btn btn-primary form-control"><i class="fas fa-link"></i> Generar Enlace</button> 
+                        </form>
+                    {{/if}}                       
+                </div>
+            </div>
+            <div style="color: #fff; text-align: center; margin-top: 1em;">
+                <h5>Limite de Apuesta:</h5>
+                <p>Sin Limite</p>
+                <h5>Capacidad:</h5>
+                <p>Desde 1 a {{max_player_per_room}} Jugadores</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function copy(){
+        const copyText = document.createElement('textarea');
+        copyText.value = $('#_url').text();
+        document.body.appendChild(copyText);
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); 
+        document.execCommand('copy');
+        document.body.removeChild(copyText);
+        toastr.info('Se ha copiado enlace en el portapapeles.');
+    }
+</script>

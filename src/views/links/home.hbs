@@ -1,38 +1,20 @@
 <div class="container p-4">
     <div class="row">
-         <div class="col-md-5 mx-auto">
-              <div class="card">
-                    <div class="card-header">
-                        <h2>Crear Partida</h2> 
-                    </div>
-                    <div class="card-body" style="text-align: center;">
-                        {{#if room}}
-                            <a id="_url" href="{{url}}/room?r={{room}}">{{url}}/room?r={{room}}</a>
-                            <button type="button" class="btn btn-success form-control" style="margin-top: 1em;" onClick="copy()"><i class="far fa-copy"></i> Copiar Enlace</button>
-                        {{else}}
-                            <form action="/create" method="post">
-                                <button type="submit" class="btn btn-primary form-control" style="margin-top: 1em;"><i class="fas fa-link"></i> Generar Enlace</button> 
-                            </form>
-                        {{/if}}                       
-                    </div>
-                    <hr>
-                    <div style="text-align: center; margin-bottom: 1em;">
-                        <p>Jugadores en Linea: {{online}}</p>
-                        <div class="fb-like" data-href="https://pkerapp.herokuapp.com/" data-width="" data-layout="button_count" data-action="like" data-size="large" data-share="true"></div>              
-                    </div>
-              </div>
-         </div>
+        <div class="col-md-5 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Partidas</h2> 
+                </div>
+                <div class="card-body" style="text-align: center; padding-bottom: 0.3em;">
+                    <a class="btn btn-primary btn-block" href="/LaViuda">La Viuda</a>
+                    <a class="btn btn-primary btn-block" href="/TexasHoldem">Texas Hold'em</a>           
+                </div>
+                <hr>
+                <div style="text-align: center; margin-bottom: 1em;">
+                    <p>Jugadores en Linea: {{online}}</p>
+                    <div class="fb-like" data-href="https://pkerapp.herokuapp.com/" data-width="" data-layout="button_count" data-action="like" data-size="large" data-share="true"></div>              
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-<script>
-    function copy(){
-        const copyText = document.createElement('textarea');
-        copyText.value = $('#_url').text();
-        document.body.appendChild(copyText);
-        copyText.select();
-        copyText.setSelectionRange(0, 99999); 
-        document.execCommand('copy');
-        document.body.removeChild(copyText);
-        toastr.info('Se ha copiado enlace en el portapapeles.');
-    }
-</script>

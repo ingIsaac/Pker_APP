@@ -1,0 +1,915 @@
+{{! Loader }}
+<div class="loader" id="loader">
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); transform: translate3d(-50%,-50%,0); color:#ffffff">
+    <img src="/pics/logon.svg" width="120" height="120">
+    <div style="margin: 1em 0 0 0.5em;"><h5>Cargando...</h5></div>
+  </div>
+</div>
+<div class="container" style="margin: 0 auto; padding: 0;">
+    <div class="d-flex" id="wrapper">
+    <!-- Sidebar -->
+    <div id="sidebar-wrapper">
+      <div class="sidebar-heading"><h4>Jugadores</h4></div>
+      <ul class="list-group" id="players"></ul>
+    </div>
+    <!-- /#sidebar-wrapper -->
+    <!-- Page Content -->
+    <div>
+      <nav class="navbar navbar-expand-lg navbar-light">
+        <button class="btn btn-info" id="menu-toggle" style="padding: 5px;"><i class="fas fa-arrows-alt-h fa-2x"></i></button>
+        <div style="margin-left: 1em; width: 100%; border-bottom: 1px solid #C0C1C0; color: white;">
+          <div id="p_name" style="float: right; text-align:right;"></div>
+        </div>
+      </nav>
+      <div class="container-fluid">
+        <div id="board" style="text-align:center;">
+          <div id="c_table" style="display: inline-flex;"></div>
+          <div id="c_player" style="display: inline-flex;"></div>
+        </div>
+        <div class="row" style="margin: 1em 0 3em 0;">
+          <div class="col-md-6">
+            <button class="btn btn-info btn-block" id="pre_init"><i class="fab fa-buffer"></i> Iniciar Partida</button>
+            <button class="btn btn-info btn-block" id="_pasar"><i class="fas fa-arrow-right"></i> Pasar</button>
+            <button class="btn btn-info btn-block" id="_igualar_apuesta"><i class="fas fa-equals"></i> Igualar Apuesta</button>
+            <button class="btn btn-info btn-block" id="_subir_apuesta"><i class="fas fa-angle-double-up"></i> Subir Apuesta</button>
+            <button class="btn btn-danger btn-block" id="_no_continuar"><i class="fas fa-times-circle"></i> No Continuar</button>
+            <hr>                              
+            <button class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal"><i class="fas fa-user"></i> Cambiar Nombre</button>
+            <button class="btn btn-secondary btn-block" id="get_prev_end_game"><i class="fas fa-history"></i> Ver Jugada Anterior</button>
+            <button class="btn btn-secondary btn-block" id="get_table_guide"><i class="far fa-question-circle"></i></i> Guía de Jugadas</button>
+            <button class="btn btn-dark btn-block btn-block" style="margin-bottom: 1em;" id="_salir_partida" onClick="salirSecure()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+          </div>
+          <div class="col-md-6">
+            <ul id="player_data" class="list-group">
+              <li class="list-group-item"><b>Cartas Iniciales:</b> <div><img class="img-fluid" id="_carta_inicial_1" alt="Responsive image" width="80" height="40" src=""><img class="img-fluid" id="_carta_inicial_2" style="margin-left: 1em;" alt="Responsive image" width="80" height="40" src=""></div></li>
+              <li class="list-group-item"><b>Fichas:</b> <p id="p_fichas"></p></li>
+              <li class="list-group-item"><b>Puntos:</b> <p id="p_puntos"></p></li>
+            </ul>
+          </div>                      
+        </div>
+      </div>
+      <div id="_chat_icon" style="position:fixed; bottom: 40px; right: 20px; z-index: 98; cursor: pointer; color: #79ABCD; text-shadow: 2px 2px 4px #000000;" hidden>
+        <i class="fas fa-comments fa-5x"></i>
+      </div>
+    </div>
+    <!-- #content -->
+  </div>
+</div>
+{{! Change Name }}
+<div class="modal" id="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Nombre de Jugador</h5>
+        </div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="t_nombre" style="text-transform:uppercase" class="form-control" maxlength="15">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="nombre">Guardar</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{! End Game }}
+<div class="modal" id="modal3" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title" id="_next_game_title"></h5>
+        </div>
+      </div>
+      <div class="modal-body" style="height: 400px;">
+        <div class="container" style="max-height: 370px; overflow: auto;" id="_end_game_list"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="_next_game">Siguente Partida</button>
+        <button type="button" class="btn btn-secondary" id="_next_game_cerrar" data-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-dark" id="_next_game_salir" onClick="salirSecure()">Salir</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{! Winner }}
+<div class="modal" id="modal5" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="pyro" style="position: relative;">
+        <div class="before"></div>
+        <div class="after"></div>
+      </div>
+      <div class="modal-header">
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Felicidades ¡Has Ganado el Juego!</h5>
+        </div>
+      </div>
+      <div class="modal-body" style="height: 400px;">
+        <div class="container">
+          <div style="text-align: center;">
+            <img src="/pics/winner.png">
+          </div>
+          <div style="margin-top: 1em; text-align: center;">
+            <h4 id="winner_name"></h4>
+            <h5 id="winner_id"></h5>
+            <h2 id="winner_points"></h2>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-dark" href="/">Salir</a>
+      </div>
+    </div>
+  </div>
+</div>
+{{! Secure Exit }}
+<div class="modal" id="modal6" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-body" style="text-align: center;">
+        <h4>¿Está seguro de salir de la partida?</h4>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <a class="btn btn-danger" href="/">Salir</a>
+      </div>
+    </div>
+  </div>
+</div>
+{{! Guide Table }}
+<div class="modal" id="modal7" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Guía de Jugadas</h5>
+        </div>
+      </div>
+      <div class="modal-body" style="overflow: auto; height: 400px;">
+        <table class="table" id="_table_b_jugadas" style="table-layout: auto;">
+          <colgroup>
+            <col span="1" style="width: 25%;">
+            <col span="1" style="width: 50%;">
+            <col span="1" style="width: 25%;">
+          </colgroup>
+          <thead class="thead-dark" style="text-align: center;">
+            <tr>
+              <th scope="col">Jugada</th>
+              <th scope="col">Ejemplo</th>
+              <th scope="col">Puntos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Escalera Real o Flor Imperial</td>
+              <td><div class="card_showcase">
+                <img src="/pics/cards/10_of_spades.svg" width="48" height="64">
+                <img src="/pics/cards/jack_of_spades.svg" width="48" height="64">
+                <img src="/pics/cards/queen_of_spades.svg" width="48" height="64">
+                <img src="/pics/cards/king_of_spades.svg" width="48" height="64">
+                <img src="/pics/cards/ace_of_spades.svg" width="48" height="64">
+              </div></td>
+              <td>+900</td>
+            </tr>
+            <tr>
+              <td>Escalera de Color o Flor</td>
+              <td><div class="card_showcase">
+                <img src="/pics/cards/5_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/6_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/7_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/8_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/9_of_clubs.svg" width="48" height="64">
+              </div></td>
+              <td>+800</td>
+            </tr>
+            <tr>
+              <td>Poker</td>
+               <td><div class="card_showcase">
+                <img src="/pics/cards/10_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/10_of_spades.svg" width="48" height="64">
+                <img src="/pics/cards/10_of_diamonds.svg" width="48" height="64">
+                <img src="/pics/cards/10_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/8_of_spades.svg" width="48" height="64">
+              </div></td>
+              <td>+700</td>
+            </tr>
+            <tr>
+              <td>Full House</td>
+              <td><div class="card_showcase">
+                <img src="/pics/cards/7_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/7_of_diamonds.svg" width="48" height="64">
+                <img src="/pics/cards/7_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/4_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/4_of_spades.svg" width="48" height="64">
+              </div></td>
+              <td>+600</td>
+            </tr>
+            <tr>
+              <td>Color</td>
+              <td><div class="card_showcase">
+                <img src="/pics/cards/2_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/6_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/9_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/queen_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/4_of_hearts.svg" width="48" height="64">
+              </div></td>
+              <td>+500</td>
+            </tr>
+            <tr>
+              <td>Escalera</td>
+              <td><div class="card_showcase">
+                <img src="/pics/cards/ace_of_spades.svg" width="48" height="64">
+                <img src="/pics/cards/2_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/3_of_diamonds.svg" width="48" height="64">
+                <img src="/pics/cards/4_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/5_of_diamonds.svg" width="48" height="64">
+              </div></td>
+              <td>+400</td>
+            </tr>
+            <tr>
+              <td>Tercia</td>
+              <td><div class="card_showcase">
+                <img src="/pics/cards/jack_of_spades.svg" width="48" height="64">
+                <img src="/pics/cards/jack_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/jack_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/10_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/7_of_hearts.svg" width="48" height="64">
+              </div></td>
+              <td>+300</td>
+            </tr>
+            <tr>
+              <td>Dos Pares</td>
+              <td><div class="card_showcase">
+                <img src="/pics/cards/4_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/4_of_diamonds.svg" width="48" height="64">
+                <img src="/pics/cards/7_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/7_of_diamonds.svg" width="48" height="64">
+                <img src="/pics/cards/jack_of_hearts.svg" width="48" height="64">
+              </div></td>
+              <td>+200</td>
+            </tr>
+            <tr>
+              <td>Un Par</td>
+              <td><div class="card_showcase">
+                <img src="/pics/cards/8_of_spades.svg" width="48" height="64">
+                <img src="/pics/cards/8_of_diamonds.svg" width="48" height="64">
+                <img src="/pics/cards/9_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/king_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/ace_of_spades.svg" width="48" height="64">
+              </div></td>
+              <td>+100</td>
+            </tr>
+            <tr>
+              <td>Carta Mayor</td>
+              <td><div class="card_showcase">
+                <img src="/pics/cards/ace_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/10_of_clubs.svg" width="48" height="64">
+                <img src="/pics/cards/3_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/5_of_hearts.svg" width="48" height="64">
+                <img src="/pics/cards/queen_of_diamonds.svg" width="48" height="64">
+              </div></td>
+              <td>+Valor de Carta</td>
+            </tr>
+          </tbody>
+        </table>
+        <hr>
+        <div style="text-align: center;"><h4>Puntos Extras:</h4></div>
+        <hr>
+        <table class="table" style="text-align: center;">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Valor de Carta</th>
+              <th scope="col">Puntos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><img src="/pics/cards/6_of_clubs.svg" width="64" height="80"></td>
+              <td>+6</td>
+            </tr>
+            <tr>
+              <td><img src="/pics/cards/queen_of_hearts.svg" width="64" height="80"></td>
+              <td>+12</td>
+            </tr>
+            <tr>
+              <td><img src="/pics/cards/ace_of_spades.svg" width="64" height="80"></td>
+              <td>+14</td>
+            </tr>          
+          </tbody>
+        </table>
+        <table class="table" style="text-align: center;">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Naipe</th>
+              <th scope="col">Puntos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><img src="/pics/espadas.png"></td>
+              <td>+4</td>
+            </tr>
+            <tr>
+              <td><img src="/pics/corazon.png"></td>
+              <td>+3</td>
+            </tr>
+            <tr>
+              <td><img src="/pics/trebol.png"></td>
+              <td>+2</td>
+            </tr>
+            <tr>
+              <td><img src="/pics/diamante.png"></td>
+              <td>+1</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{! Disconnect }}
+<div class="modal" id="modal9" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-body" style="text-align: center;">
+        <h5>Lo sentimos, haz perdido la conexión con el servidor...</h5>
+        <div style="margin-top: 1em;">
+          <i class="fas fa-dizzy fa-3x"></i>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-danger" href="/">Salir</a>
+      </div>
+    </div>
+  </div>
+</div>
+{{! Chat }}
+<div class="chat" id="chat" hidden>
+  <div style="height: 30px; background-color: #212529; padding: 3px; text-align: right; color: #DFDFDF;"><i style="cursor: pointer;" id="_close_chat_button" class="fas fa-times fa-2x"></i></div>
+  <div style="overflow: auto; height: 250px;" id="_chat_messages"></div>
+  <div class="input-group" style="position: absolute; bottom: 0; margin: 0; padding: 0; clear:both;">
+    <textarea class="form-control" id="_chat_enter_text" rows="1" style="resize: none; height: 50px; overflow: hidden; border-radius: 0;" id="_chat_messages"></textarea>
+    <div class="input-group-append">
+      <button class="btn btn-outline-secondary" style="background-color: #0275d8; color: #ffffff; border-radius: 0;" type="button" id="_chat_enter_button"><i class="far fa-comment"></i> Enviar</button>
+    </div>
+  </div>
+</div>
+<script>
+    //NoSleep.js
+    document.onreadystatechange = () => {
+      if(document.readyState === "complete")
+      {
+          var ns = new NoSleep();
+          document.addEventListener('click', function enableNoSleep() {
+            document.removeEventListener('click', enableNoSleep, false);
+            ns.enable();
+          }, false);
+          //Page Loader
+          setTimeout(() => {
+            $('#loader').hide();
+            $('#_chat_icon').attr('hidden', false);
+          }, 5000);
+      }
+    };
+
+    //Reset Function
+    function reset()
+    {
+      shows_who_knocks = true;    
+      //---------------------
+      $('#c_table').empty();
+      $('#c_player').empty();
+      $('#players').children().css('background', '#F0EFEF');
+      for(let i=0; i < 3; i++)
+      {
+          $('#c_table').append('<div class="col-sm" style="padding: 0 0.1em 0 0.1em; padding-top: 0;"><img src="/pics/cards/card_back.svg" style="width: 100%; height: 100%;"></div>');
+      }
+      for(let i=0; i < 2; i++)
+      {
+          $('#c_player').append('<div class="col-sm" style="padding: 0 0.1em 0 0.1em; padding-bottom: 0;"><img src="/pics/cards/card_back.svg" style="width: 100%; height: 100%;"></div>');
+      }
+      $('#_pasar').hide();
+      $('#_igualar_apuesta').hide();
+      $('#_subir_apuesta').hide(); 
+      $('#_no_continuar').hide();
+      //------->
+      $('#_carta_inicial_1').hide();
+      $('#_carta_inicial_2').hide();
+      //------->
+      $('#get_prev_end_game').hide();
+    }
+
+    let pick = {
+      p_card: '',
+      t_card: ''
+    }
+    let disable = true;
+    let shows_who_knocks = true;
+    let table_cards = [];
+    let player_cards = [];
+    let chat = [];
+
+    function salirSecure()
+    {
+      $('#modal6').modal('show');
+    }
+
+    $(function (){
+        ///Fontend Settings ->>
+        //Toastr Options
+        toastr.options.preventDuplicates = true;
+     
+        //Side Bar Display
+        $("#menu-toggle").click(function(e) {
+            e.preventDefault();
+            $("#wrapper").toggleClass("toggled");
+        });             
+
+        //Init Gameboard
+        reset();
+
+        //WebSockets
+        const socket = io.connect('{{server_url}}?r={{room}}', {
+          reconnection: false,
+        });
+
+        //Chat
+        $.fn.sendChatMessage = function() {
+          const message = $('#_chat_enter_text').val();
+          if(message.length > 0)
+          {
+            $('#_chat_enter_text').val('');
+            const player_name = $('#pn_li_' + socket.id).text();
+            if(player_name)
+            {
+              socket.emit('chat_message', {id: socket.id, name: player_name, message: message});
+            }
+            else
+            {
+              socket.emit('chat_message', {id: socket.id, name: null, message: message});
+            }
+          }         
+        }
+
+        $('#_chat_enter_text').on('keypress',function(e) {
+          if(e.which == 13) {
+            $(this).sendChatMessage();
+            return false;
+          }
+        });
+
+        $('#_chat_enter_button').on('click',function(e) {
+            $(this).sendChatMessage();
+        });  
+        //
+
+        //Pick a Card
+        $.fn.selectPlayerCard = function (e)
+        {                
+          if(pick.p_card === $(e).attr('id'))
+          {
+            $(e).css({"padding-bottom": "0"});
+            pick.p_card = '';
+            return
+          }
+          else
+          {
+            if(pick.p_card !== '')
+            {
+              const new_card = $(e).attr('id');
+              const prev_card = pick.p_card;
+              if(new_card !== pick.p_card)
+              {
+                const k_new_card = player_cards[new_card.split('_')[1]];
+                const k_prev_card = player_cards[prev_card.split('_')[1]];
+
+                player_cards[new_card.split('_')[1]] = k_prev_card;
+                player_cards[prev_card.split('_')[1]] = k_new_card;
+
+                //Animation
+                if(parseInt(prev_card.split('_')[1]) < parseInt(new_card.split('_')[1]))
+                {
+                   $('#' + new_card).toggleClass('animate__animated animate__fadeOutLeft animate__faster', () => {
+                    $(this).remove();
+                  }); 
+                  $('#' + prev_card).toggleClass('animate__animated animate__fadeOutRight animate__faster', () => {
+                    $(this).remove();
+                  });          
+                }
+                else
+                {
+                  $('#' + new_card).toggleClass('animate__animated animate__fadeOutRight animate__faster', () => {
+                    $(this).remove();
+                  }); 
+                  $('#' + prev_card).toggleClass('animate__animated animate__fadeOutLeft animate__faster', () => {
+                     $(this).remove();
+                  });
+                }
+
+                $(e).css({"padding-bottom": "0"});
+                pick.p_card = '';
+                setTimeout(function(){socket.emit('swap_card', player_cards);}, 300); 
+                return                          
+              }
+              $(e).css({"padding-bottom": "0"});
+              pick.p_card = ''; 
+              return     
+            }
+          }
+          $('#c_player').children().css({"padding-bottom": "0"});
+          $(e).css({"padding-bottom": "2em"});
+          pick.p_card = $(e).attr('id');                          
+          //Send
+          if(pick.p_card !== '' && pick.t_card !== '')
+          {                          
+            const prev_t_card = table_cards[pick.t_card.split('_')[1]];
+            const prev_p_card = player_cards[pick.p_card.split('_')[1]];
+
+            table_cards[pick.t_card.split('_')[1]] = prev_p_card;
+            player_cards[pick.p_card.split('_')[1]] = prev_t_card;
+
+            //Animation
+            $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
+              $(this).remove();
+            });
+            $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
+              $(this).remove();
+            });            
+
+            pick.p_card = '';
+            pick.t_card = '';
+            disable = true;
+            $('#tocar').hide();
+            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);                      
+          }          
+        }
+
+        $.fn.selectTableCard = function (e)
+        {
+          if(disable){return}        
+          if(pick.t_card === $(e).attr('id'))
+          {
+            $(e).css({"padding-top": "0"});
+            pick.t_card = '';
+            return
+          }
+          $('#c_table').children().css({"padding-top": "0"});
+          $(e).css({"padding-top": "2em"});
+          pick.t_card = $(e).attr('id');            
+          //Send
+          if(pick.p_card !== '' && pick.t_card !== '')
+          {             
+            const prev_t_card = table_cards[pick.t_card.split('_')[1]];
+            const prev_p_card = player_cards[pick.p_card.split('_')[1]];
+
+            table_cards[pick.t_card.split('_')[1]] = prev_p_card;
+            player_cards[pick.p_card.split('_')[1]] = prev_t_card;
+
+            //Animation
+            $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
+              $(this).remove();
+            });
+            $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
+              $(this).remove();
+            });  
+
+            pick.p_card = '';
+            pick.t_card = '';
+            disable = true;
+            $('#tocar').hide();
+            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);                     
+          }                  
+        }
+
+        //Get Status
+        socket.on('connected', (data) => {
+            toastr.success(data);
+        });
+        socket.on('disconnected', (data) => {
+            toastr.warning(data);
+        });
+        //Get Message
+        socket.on('message', (data) => {
+            toastr.info(data);
+        });
+        //Get Data
+        socket.on('players', (data) => {
+            $('#players').empty();
+            for(let i=0; i < data.length; i++)
+            {
+                if(socket.id == data[i].id)
+                {
+                  $('#p_name').empty();
+                  $('#p_name').append('<h4 id="_j_name" hidden>' + data[i].nombre + '</h4><h6 id="_j_id">' + data[i].id + '</h6>');
+                }
+                $('#players').append('<li id="' + data[i].id + '" class="list-group-item"><h5 id="pn_li_' + data[i].id + '" hidden>' + data[i].nombre + '</h5>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');
+            }
+            socket.emit('reload_player_data');          
+        });
+        socket.on('change_player_name', (data) => {
+          if(data)
+          {
+            if(socket.id == data.id)
+            {
+              $('#_j_name').text(data.nombre).removeAttr('hidden');
+            }
+            $('#pn_li_' + data.id).text(data.nombre).removeAttr('hidden');
+          }
+        });
+        socket.on('init', () => {
+            //Disable Init button
+            $('#pre_init').hide();              
+            $('#init').hide();
+        });
+        socket.on('set_player_cards', (data) => {
+            $('#c_player').empty();
+            player_cards = data.hand; //Set Player Hand
+            for(let i=0; i < data.hand.length; i++)
+            {
+              $('#c_player').append('<div class="col-sm" id="ph_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-bottom: 0;" onClick="$(this).selectPlayerCard(this);" onTouch="$(this).selectPlayerCard(this);"><img src="/pics/cards/' + data.hand[i].img + '" style="width: 100%; height: 100%;"></div>');
+            }
+        });
+        socket.on('set_table_cards', (data) => {
+            $('#c_table').empty();
+            table_cards = data.c_table; //Set Table cards
+            for(let i=0; i < data.c_table.length; i++)
+            {
+              $('#c_table').append('<div class="col-sm" id="tc_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-top: 0;" onClick="$(this).selectTableCard(this);" onTouch="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');
+            }
+        });     
+        socket.on('room_data', (data) => {
+            if(data)
+            {
+              //Check Table Cards
+              if(data.c_ronda)
+              {
+                $('#c_table').empty();
+                table_cards = data.c_table; //Set Table cards
+                for(let i=0; i < data.c_table.length; i++)
+                {
+                  $('#c_table').append('<div class="col-sm" id="tc_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-top: 0;" onClick="$(this).selectTableCard(this);" onTouch="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');                  
+                }              
+              }
+              //Set Turn Display
+              $('#players').children().css('background', '#F0EFEF');
+              $('#' + data.p_turn).css('background','#b6fcba');
+              if(socket.id == data.p_turn)
+              {
+                const player_name = $('#pn_li_' + data.p_turn).text();
+                const player_id = data.p_turn;
+                if(player_name)
+                {
+                  toastr.info(player_name + ' - ' + player_id, 'Es tu Turno:');
+                }
+                else
+                {
+                  toastr.info(player_id, 'Es tu Turno:');
+                }
+                disable = false;
+                //Enable End_Turn button
+                $('#end_turn').show();
+                if(data.c_ronda)
+                {
+                  $('#tocar').show();
+                  $('#take_all').hide();
+                  if(data.p_cantake === socket.id)
+                  {
+                    $('#take_all').show();
+                  }                
+                }
+                else
+                {
+                  $('#tocar').hide();
+                  $('#take_all').show();   
+                }
+              }
+              else
+              {
+                if(data.p_turn)
+                {
+                  const player_name = $('#pn_li_' + data.p_turn).text();
+                  const player_id = data.p_turn;
+                  if(player_name)
+                  {
+                    toastr.info(player_name + ' - ' + player_id, 'Es Turno de:');
+                  }
+                  else
+                  {
+                    toastr.info(player_id, 'Es Turno de:');
+                  }
+                }
+                disable = true;
+                $('#end_turn').hide();
+                $('#tocar').hide();
+                $('#take_all').hide();
+              }          
+            }
+        });
+        socket.on('player_data', data => {
+            if(data)
+            {             
+              $('#p_fichas').text(data.chips);
+              $('#p_puntos').text(data.points);            
+            }
+        });
+        socket.on('check_player_chips', data => {           
+            socket.emit('lose');                                                
+        });
+        socket.on('end_game', data => {
+            if(data)
+            {             
+              $('#_end_game_list').empty();
+              for(let i=0; i < data.length; i++)
+              {
+                if(socket.id == data[i].id)
+                {
+                  if(data[i].nombre)
+                  {
+                    $('#_end_game_list').append('<div style="color: red;"><b>Jugador:</b><p>' + data[i].nombre + ' - ' + data[i].id + '</p><b>Puntos:</b><p>' + data[i].score + '</p><b>Tipo de Juego:</b><p>' + data[i].g_type + '</p></div>');
+                  }
+                  else
+                  {
+                    $('#_end_game_list').append('<div style="color: red;"><b>Jugador:</b><p>' + data[i].id + '</p><b>Puntos:</b><p>' + data[i].score + '</p><b>Tipo de Juego:</b><p>' + data[i].g_type + '</p></div>');
+                  }
+                }
+                else
+                {
+                  if(data[i].nombre)
+                  {
+                    $('#_end_game_list').append('<div><b>Jugador:</b><p>' + data[i].nombre + ' - ' + data[i].id + '</p><b>Puntos:</b><p>' + data[i].score + '</p><b>Tipo de Juego:</b><p>' + data[i].g_type + '</p></div>');
+                  }
+                  else
+                  {
+                    $('#_end_game_list').append('<div><b>Jugador:</b><p>' + data[i].id + '</p><b>Puntos:</b><p>' + data[i].score + '</p><b>Tipo de Juego:</b><p>' + data[i].g_type + '</p></div>');
+                  }
+                }                
+                const t = $('<div class="container" style="display: inline-flex; margin-bottom: 1em;"></div>');
+                for(let v=0; v < data[i].hand.length; v++)
+                {
+                  $(t).append('<div class="col-sm" style="padding: 0 0.1em 0 0.1em; padding-top: 0;"><img src="/pics/cards/' + data[i].hand[v].img + '" style="width: 100%; height: 100%;"></div>');
+                }
+                $('#_end_game_list').append(t);
+              }
+              $('#_next_game').show();
+              $('#_next_game_salir').show();
+              $('#_next_game_cerrar').hide();
+              $('#_next_game_title').text('Fin de la Partida');
+              $('#modal3').modal('show');
+            }
+        });
+        socket.on('send_next_game', () => {
+          reset();
+        });
+        socket.on('players_data', data => {
+          if(data)
+          {
+            for(let i=0; i < data.length; i++)
+            {
+              $('#_P'+ data[i].id).empty();
+              $('#_P'+ data[i].id).append('<p><b>-Puntos:</b> ' + data[i].juego.points + ' <b>-Fichas:</b> ' + data[i].juego.chips + '</p>');
+              $('#_viudas').text(data[i].viudas);
+              if(data[i].juego.extra == null)
+              {
+                $('#_C'+ data[i].id).empty();
+              }
+            }
+          }        
+        });
+        socket.on('send_loser_msg', data => {
+          if(data)
+          {
+            if(socket.id == data.id)
+            {
+              alert('Te has quedado sin fichas! Estas fuera del juego.');
+              window.location.replace('/')
+            }
+            else
+            {
+              if(data.nombre)
+              {
+                toastr.info(data.nombre + ' - ' + data.id + ' se ha quedado sin fichas.', 'Expulsado:');
+              }
+              else
+              {
+                toastr.info(data.id + ' se ha quedado sin fichas.', 'Expulsado:');
+              }
+            }            
+          }
+        });  
+        socket.on('winner', data => {
+          if(data)
+          {
+            $('#winner_name').text(data.nombre);
+            $('#winner_id').text(data.id);
+            $('#winner_points').text('Puntos: ' + data.puntos);
+            $('#modal5').modal('show');
+          }
+        });
+        socket.on('chat_messages', data => {
+          if(data)
+          {           
+            let i = chat.length;
+            let _n = '';
+            if(i < 0)
+            {
+              i = 0;
+            }
+            for(i; i < data.length; i++)
+            {
+              if(socket.id != data[i].id)
+              {               
+                if(data[i].name)
+                {
+                  $('#_chat_messages').append('<div style="word-wrap: break-word; margin: 0.5em 2em 0.5em 0.5em; border-radius: 5px; text-align: left; padding: 0.5em; background-color: #DBDBFF;"><div style="font-size: 12px;">' + new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}) + '</div><b>' + data[i].name + '</b></br><p>' + data[i].message + '</p></div>');
+                }
+                else
+                {
+                  $('#_chat_messages').append('<div style="word-wrap: break-word; margin: 0.5em 2em 0.5em 0.5em; border-radius: 5px; text-align: left; padding: 0.5em; background-color: #DBDBFF;"><div style="font-size: 12px;">' + new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}) + '</div><b>' + data[i].id + '</b></br><p>' + data[i].message + '</p></div>');
+                }               
+              }
+              else
+              {               
+                if(data[i].name)
+                {
+                  $('#_chat_messages').append('<div style="word-wrap: break-word; margin: 0.5em 0.5em 0.5em 2em; border-radius: 5px; text-align: right; padding: 0.5em; background-color: #EDEDFF;"><div style="font-size: 12px;">' + new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}) + '</div><b>' + data[i].name + '</b></br><p>' + data[i].message + '</p></div>');
+                }
+                else
+                {
+                  $('#_chat_messages').append('<div style="word-wrap: break-word; margin: 0.5em 0.5em 0.5em 2em; border-radius: 5px; text-align: right; padding: 0.5em; background-color: #EDEDFF;"><div style="font-size: 12px;">' + new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}) + '</div><b>' + data[i].id + '</b></br><p>' + data[i].message + '</p></div>');
+                }                
+              }
+            }
+            //---------> IF Get Messages
+            if(chat.length < data.length)
+            {
+              chat = data;
+              //Refresh Scroll Position
+              const messages_area = document.getElementById('_chat_messages');
+              messages_area.scrollTop = messages_area.scrollHeight;
+              //Send Animation
+              $('#_chat_icon').addClass('animate__animated animate__heartBeat animate__faster');
+              setTimeout(() => {
+                $('#_chat_icon').removeClass('animate__animated animate__heartBeat animate__faster');
+              }, 1000)
+            }
+          }
+        });
+        socket.on('disconnect', () => {
+          $('#modal9').modal('show');
+        });
+        //Send Data
+        $('#init').on('click', () => {
+            $('#pre_init').hide();
+            const n_viudas = $('#_numero_viudas').val();
+            socket.emit('init', n_viudas);
+        });
+        $('#end_turn').on('click', () => {
+            $('#end_turn').hide();
+            socket.emit('end_turn');
+        });     
+        $('#nombre').on('click', () => {
+            $('#modal').modal('hide');
+            socket.emit('nombre', $('#t_nombre').val().toUpperCase());
+        });       
+        $('#_next_game').on('click', () => {
+            $('#modal3').modal('hide');
+            socket.emit('request_next_game');
+        });              
+        $('#get_prev_end_game').on('click', () => {
+            $('#_next_game_salir').hide();
+            $('#_next_game_cerrar').show();
+            $('#_next_game').hide();
+            $('#_next_game_title').text('Jugada Anterior');
+            $('#modal3').modal('show');
+        });
+        $('#_chat_icon').on('click', () => {
+            const messages = $('#_chat_messages').children().length;
+            if(messages == 0)
+            {
+              socket.emit('get_chat_message');
+            }
+            $('#chat').attr('hidden', false);
+            //Refresh Scroll Position
+            const messages_area = document.getElementById('_chat_messages');
+            messages_area.scrollTop = messages_area.scrollHeight;
+        });
+        $('#_close_chat_button').on('click', () => {
+            $('#chat').attr('hidden', true);
+        });
+        $('#get_table_guide').on('click', () => {
+            $('#modal7').modal('show');
+        });
+        $('#pre_init').on('click', () => {
+            $('#modal8').modal('show');
+        });
+    });
+</script>

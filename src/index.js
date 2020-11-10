@@ -46,9 +46,14 @@ const server = app.listen(app.get('port'), () => {
 //WebSockets
 const IO = require('socket.io')(server);
 
-//Routes
-app.use(require('./routes/home')(app, IO));
-app.use(require('./routes/room')(app, IO));
+///Routes
+app.use(require('./routes/home')(IO));
+//--> LaViuda Routes
+app.use(require('./routes/LaViuda/lobby')(app, IO));
+app.use(require('./routes/LaViuda/room')(app, IO));
+//--> TexasHold'em Routes
+app.use(require('./routes/TexasHoldem/lobby')(app, IO));
+app.use(require('./routes/TexasHoldem/room')(app, IO));
 
 //Not Found Error
 app.use(function(req, res){

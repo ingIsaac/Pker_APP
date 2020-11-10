@@ -52,8 +52,7 @@ const cards = [
     {value: 10, type: "s", wildcard_value: 10, type_value: 4, img: "10_of_spades.svg"},
     {value: 11, type: "s", wildcard_value: 11, type_value: 4, img: "jack_of_spades.svg"},
     {value: 12, type: "s", wildcard_value: 12, type_value: 4, img: "queen_of_spades.svg"},
-    {value: 13, type: "s", wildcard_value: 13, type_value: 4, img: "king_of_spades.svg"},
-    {value: 0, type: "j", wildcard_value: 0, type_value: 0, img: "red_joker.svg"}
+    {value: 13, type: "s", wildcard_value: 13, type_value: 4, img: "king_of_spades.svg"}
 ]
 
 function getRandomInt(min, max) 
@@ -61,10 +60,10 @@ function getRandomInt(min, max)
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
-function joinPlayerRoom(IO, socket, room)
+function joinPlayerRoom(IO, socket, room, chips)
 {
     socket.join(room);
-    socket.juego = {points: 0, chips: 2, hand: [], extra: null};
+    socket.juego = {points: 0, chips: chips, hand: []};
     IO.to(room).emit('connected', socket.id + " se ha unido a esta partida.");
 }
 
@@ -103,27 +102,7 @@ function setupGame(IO, room, app)
         let m = null;
         let _cards = JSON.parse(JSON.stringify(cards));
 
-        for(let i=0; i < u.length; i++)
-        {
-            k = IO.sockets.connected[u[i]];
-            if(k)
-            {
-                if(k.juego.extra != null)
-                {
-                    m = k.juego.extra;
-                    break;
-                }
-            }
-        }
-
-        if(m)
-        {
-            _cards = cards.filter(c => (c.value+c.type) !== (m.value+m.type));
-        }
-
-        k = null;
-
-        while(deck.length < ((player_count*5) + 5))
+        while(deck.length < ((player_count*2) + 5))
         {
             const _c = _cards[getRandomInt(0, (_cards.length))]
             const t = deck.find(c => (c.value+c.type) === (_c.value+_c.type))
@@ -136,19 +115,14 @@ function setupGame(IO, room, app)
         for(let i=0; i < u.length; i++)
         {
             let hand = [];
-            for(let v=i*5; v < ((i+1)*5); v++)
+            for(let v=i*2; v < ((i+1)*2); v++)
             {
                 hand.push(deck[v]);
             }
             k = IO.sockets.connected[u[i]];
             if(k)
             {                             
-                k.juego.hand = hand; 
-                if(k.juego.extra != null)
-                {
-                    k.juego.hand.pop();
-                    k.juego.hand.push(k.juego.extra);
-                }                                
+                k.juego.hand = hand;                               
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -161,15 +135,11 @@ function setupGame(IO, room, app)
             Room.settings.available = false;
             //Set table Cards
             Room.settings.c_table = [];
-            for(let i=(player_count*5); i < ((player_count*5)+5); i++)
+            for(let i=(player_count*2); i < ((player_count*2)+5); i++)
             {
                 Room.settings.c_table.push(deck[i]);                
             }
             //Other Settings
-            Room.settings.c_ronda = false;
-            Room.settings.n_turn = 0;
-            Room.settings.p_knock = null;
-            Room.settings.p_cantake = null;
             Room.settings.p_turn = Room.settings.pivote;       
             //Send Data
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
@@ -195,16 +165,8 @@ function nextTurn(IO, room, app, socket)
         const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
         {
-            if(Room.settings.p_knock == next)
-            {
-                return endGame(IO, room, app);
-            }
             Room.settings.p_turn = next;
             Room.settings.n_turn += 1;
-            if(u.length == Room.settings.n_turn)
-            {
-                Room.settings.c_ronda = true;
-            }
             IO.to(room).emit('room_data', Room.settings);
         }
     }
@@ -228,69 +190,6 @@ function swapCard(socket, data)
     socket.emit('set_player_cards', socket.juego);
 }
 
-function tocar(IO, room, app, socket)
-{
-    if(IO.sockets.adapter.rooms[room]){
-        const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
-        const t = u.findIndex(p => p == socket.id)
-        let canTake = null;
-        if(t === 0){
-            canTake = u[u.length-1];
-        }
-        else{
-            canTake = u[t-1];
-        }
-
-        const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
-        if(Room)
-        {
-            Room.settings.p_knock = socket.id;
-            Room.settings.p_cantake = canTake;
-            //Send
-            nextTurn(IO, room, app, socket)
-        }
-    }
-}
-
-function takeAll(IO, room, app, socket)
-{
-    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
-    if(Room)
-    {
-        const c_table = Room.settings.c_table;
-        const c_player = socket.juego.hand;
-        
-        Room.settings.c_table = c_player;
-        Room.settings.c_ronda = true;
-
-        socket.juego.hand = c_table;
-
-        socket.emit('set_player_cards', socket.juego);
-        IO.to(room).emit('set_table_cards', Room.settings);
-        IO.to(room).emit('take_all_message', {id: socket.id, nombre: socket.nombre});
-    }
-}
-
-function buyWidow(IO, room, app, socket)
-{
-    const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
-    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
-    if(Room)
-    {
-        const cost = process.env._APP_PRECIO_VIUDA;
-        if(socket.juego.points >= cost)
-        {
-            socket.juego.points -= cost;
-            socket.juego.chips += 1;
-            Room.settings.widows -= 1;
-            IO.to(room).emit('someone_bought_a_window', {id: socket.id, nombre: socket.nombre});
-        }       
-
-        socket.emit('player_data', socket.juego);
-        IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
-    }
-}
-
 function endGame(IO, room, app)
 {
     if(IO.sockets.adapter.rooms[room]){
@@ -307,7 +206,6 @@ function endGame(IO, room, app)
                     const hand = JSON.parse(JSON.stringify(k.juego.hand));
                     const score = scoreHand(hand, Room);
                     k.juego.points += score.score;
-                    k.juego.extra = null;
                     scores.push({id: u[i], nombre: k.nombre, score: score.score, g_type: score.g_type, hand: hand});
                     k.emit('player_data', k.juego);                                                         
                 }                   
@@ -324,8 +222,6 @@ function endGame(IO, room, app)
                 }
                 _k.emit('player_data', _k.juego);                                          
             }
-            Room.settings.game_in_course = false;
-            Room.settings.deck_splited = false;
             IO.to(room).emit('end_game', scores);     
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
         }
@@ -367,14 +263,14 @@ function scoreHand(hand, Room)
     return 0;
 }
 
-function isComodin(card, Room)
+function isComodin(card)
 {
-    if(card.wildcard_value === 0 || card.wildcard_value === Room.settings.j_jugados){return true}
+    if(card.wildcard_value === 0){return true}
 }
 
 function getOrderType(hand, Room)
 {
-    const w = hand.filter(c => c.wildcard_value === 0 || c.wildcard_value === Room.settings.j_jugados);
+    const w = hand.filter(c => c.wildcard_value === 0);
     if(w.length > 2)
     {
         return 0;
@@ -398,7 +294,7 @@ function getOrderType(hand, Room)
             }
         }
         //--------------------------------->   
-        if(!isComodin(hand[i], Room))
+        if(!isComodin(hand[i]))
         {
             if(s >= 14 && hand[i].value < s)
             {
@@ -407,7 +303,7 @@ function getOrderType(hand, Room)
         }
         if(hand[i].value !== (k+i))
         {
-            if(!isComodin(hand[i], Room))
+            if(!isComodin(hand[i]))
             {
                 r = 0;
                 break;
@@ -429,11 +325,11 @@ function getOrderType(hand, Room)
         {
             if(i == 0)
             {
-                if(isComodin(hand[i], Room))
+                if(isComodin(hand[i]))
                 {
                     for(let v=0; v < hand.length; v++)
                     {
-                        if(!isComodin(hand[v], Room))
+                        if(!isComodin(hand[v]))
                         {
                             hand[i].value = hand[v].value - v;              
                             break;
@@ -453,11 +349,11 @@ function getOrderType(hand, Room)
         r += q;
         for(let i=0; i < hand.length; i++)
         {
-            if(isComodin(hand[i], Room))
+            if(isComodin(hand[i]))
             {
                 for(let v=0; v < hand.length; v++)
                 {
-                    if(!isComodin(hand[v], Room))
+                    if(!isComodin(hand[v]))
                     {
                         hand[i].type = hand[v].type;
                         hand[i].type_value = hand[v].type_value;
@@ -474,7 +370,7 @@ function getOrderType(hand, Room)
             if(v.value === 10 && _s <= 1) //-----------------> Wilcard Filter
             {
                 g_type = 'Flor Imperial';
-                r += 200;
+                r += 100;
             }
         }
     }
@@ -483,7 +379,7 @@ function getOrderType(hand, Room)
 
 function getRepetedColor(hand, Room)
 {
-    const w = hand.filter(c => c.wildcard_value === 0 || c.wildcard_value === Room.settings.j_jugados);
+    const w = hand.filter(c => c.wildcard_value === 0);
     if(w.length > 2)
     {
         return 0;
@@ -496,9 +392,9 @@ function getRepetedColor(hand, Room)
     {
         if(u !== null)
         {
-            if(u.type === hand[i].type || isComodin(hand[i], Room))
+            if(u.type === hand[i].type || isComodin(hand[i]))
             {
-                if(isComodin(hand[i], Room))
+                if(isComodin(hand[i]))
                 {
                     hand[i].value = u.value;
                     hand[i].type = u.type;
@@ -514,11 +410,11 @@ function getRepetedColor(hand, Room)
         }
         else
         {
-            if(isComodin(hand[i], Room))
+            if(isComodin(hand[i]))
             {
                 for(let v=0; v < hand.length; v++)
                 {
-                    if(!isComodin(hand[v], Room))
+                    if(!isComodin(hand[v]))
                     {
                         hand[i].value = hand[v].value;                         
                         hand[i].type = hand[v].type;
@@ -550,9 +446,9 @@ function getRepetedValues(hand, Room)
     {
         if(u !== null)
         {
-            if(u.value === _hand[i].value || isComodin(_hand[i], Room))
+            if(u.value === _hand[i].value || isComodin(_hand[i]))
             {
-                if(isComodin(_hand[i], Room))
+                if(isComodin(_hand[i]))
                 {
                     _hand[i].value = u.value;
                     if(_hand[i].wildcard_value == 0)
@@ -587,11 +483,11 @@ function getRepetedValues(hand, Room)
         }
         else
         {
-            if(isComodin(_hand[i], Room))
+            if(isComodin(_hand[i]))
             {
                 for(let v=0; v < _hand.length; v++)
                 {
-                    if(!isComodin(_hand[v], Room))
+                    if(!isComodin(_hand[v]))
                     {
                         _hand[i].value = _hand[v].value;
                         if(_hand[i].wildcard_value == 0)
@@ -608,12 +504,7 @@ function getRepetedValues(hand, Room)
     }
     if(n[0].sub_hand.length > 0 && n[1].sub_hand.length == 0)
     {
-        if(n[0].sub_hand.length == 5)
-        {
-            r += 900;
-            g_type = 'Quintilla'       
-        }
-        else if(n[0].sub_hand.length == 4)
+        if(n[0].sub_hand.length == 4)
         {
             r += 700;
             g_type = 'Poker'
@@ -711,118 +602,9 @@ function getRepetedValues(hand, Room)
     return {score: r, g_type: g_type};
 }
 
-function nextGame(IO, room, app)
-{
-    const getRoom = IO.sockets.adapter.rooms[room];
-    if(getRoom)
-    {
-        const u = Object.keys(getRoom.sockets); 
-        for(let i=0; i < u.length; i++)
-        {
-            const socket = IO.sockets.connected[u[i]];
-            if(socket.juego.chips == 0)
-            {
-                socket.emit('check_player_chips');
-            }
-        }
-    }
-    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
-    if(Room)
-    {       
-        if(!Room.settings.game_in_course)
-        {
-            Room.settings.game_in_course = true;
-            Room.settings.j_jugados++;
-            if(Room.settings.j_jugados > 13) //Reset Count
-            {
-                Room.settings.j_jugados = 0;
-            }
-            if(Room.settings.j_jugados > 0) //Set New Wildcard
-            {
-                const comodin = cards.find(c => c.wildcard_value === Room.settings.j_jugados);
-                Room.settings.comodin = comodin.img;
-            }           
-            IO.to(room).emit('send_next_game');
-            selectSplitDeckPlayer(IO, room, app);
-        }
-    }
-}
-
-function selectSplitDeckPlayer(IO, room, app, data)
-{
-    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
-    if(Room)
-    {       
-        //Set Number of Widows
-        if(data)
-        {
-            if(Room.settings.widows > 0)
-            {
-                return
-            }
-
-            Room.settings.widows = 2;
-
-            const n_viudas = parseInt(data);
-            if(n_viudas > 0)
-            {
-                Room.settings.widows = n_viudas;
-            }
-        }
-
-        //Set Pivote
-        const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
-        if(Room.settings.pivote == null)
-        {
-            Room.settings.pivote = u[getRandomInt(0, u.length)];
-        }
-        else
-        {
-            const next = u.findIndex(p => p == Room.settings.pivote);
-            if(next < u.length-1)
-            {
-                Room.settings.pivote = u[next+1]; 
-            }
-            else
-            {
-                Room.settings.pivote = u[0];
-            }
-        }
-        const socket = IO.sockets.connected[Room.settings.pivote];
-        IO.to(room).emit('_send_split_deck_request', {id: socket.id, nombre: socket.nombre});
-        IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
-    }
-}
-
-function splitDeck(IO, room, app, socket)
-{   
-    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
-    if(Room)
-    {    
-        if(!Room.settings.deck_splited)
-        {
-            Room.settings.deck_splited = true;
-            const extra = cards[getRandomInt(0, cards.length)];
-            if(extra.wildcard_value == Room.settings.j_jugados || extra.wildcard_value == 0)
-            {
-                socket.juego.extra = extra;              
-            }
-            IO.to(room).emit('_extra_card', {id: socket.id, juego: socket.juego, extra_img: extra.img});
-            setupGame(IO, room, app);
-        }
-    } 
-}
-
 function lose(IO, room, app, socket)
 {
     IO.to(room).emit('send_loser_msg', {id: socket.id, nombre: socket.nombre});
-    selectSplitDeckPlayer(IO, room, app);
-}
-
-function knockMsg(IO, room, data)
-{
-    const socket = IO.sockets.connected[data];
-    IO.to(room).emit('send_knock_msg', {id: socket.id, nombre: socket.nombre});
 }
 
 function setNewValuesOnDisconnection(IO, room, app, socket)
@@ -841,40 +623,19 @@ function setNewValuesOnDisconnection(IO, room, app, socket)
                 _socket.emit('winner', {id: _socket.id, nombre: _socket.nombre, puntos: _socket.juego.points});
             }
 
-            //Refresh Pivote
-            if(Room.settings.pivote == socket.id)
+            //Refresh Dealer
+            if(Room.settings.dealer == socket.id)
             {
-                const next = u.findIndex(p => p == Room.settings.pivote);
+                const next = u.findIndex(p => p == Room.settings.dealer);
                 if(next < u.length-1)
                 {
-                    Room.settings.pivote = u[next+1]; 
+                    Room.settings.dealer = u[next+1]; 
                 }
                 else
                 {
-                    Room.settings.pivote = u[0];
+                    Room.settings.dealer = u[0];
                 }
-            }
-
-            //Cancel Knocking
-            if(Room.settings.p_knock == socket.id)
-            {           
-                Room.settings.p_knock = null;
-                Room.settings.p_cantake = null;
-            }
-
-            //Cancel CanTake
-            if(Room.settings.p_cantake == socket.id)
-            {           
-                const next = u.findIndex(p => p == Room.settings.p_cantake);
-                if(next == 0)
-                {
-                    Room.settings.pivote = u[u.length-1]; 
-                }
-                else
-                {
-                    Room.settings.pivote = u[next-1];
-                }       
-            }
+            }           
         }      
     } 
 }
@@ -931,12 +692,12 @@ module.exports = function(app, IO) {
             {
                 if(Rooms.length < process.env._APP_MAX_PLAYER_PER_ROOM)
                 {
-                    joinPlayerRoom(IO, socket, room)
+                    joinPlayerRoom(IO, socket, room, process.env._APP_TEXAS_HOLDEM_INIT_CHIPS)
                 }        
             }
             else
             {
-                joinPlayerRoom(IO, socket, room)
+                joinPlayerRoom(IO, socket, room, process.env._APP_TEXAS_HOLDEM_INIT_CHIPS)
             }      
             
             //Send List of Players
@@ -1007,7 +768,7 @@ module.exports = function(app, IO) {
     });
 
     //Route
-    router.get('/room', (req, res) => {
+    router.get('/LaViuda/room', (req, res) => {
         const room = req.query.r;
         const Rooms = req.app.locals.Rooms;
 
@@ -1033,7 +794,7 @@ module.exports = function(app, IO) {
                 }                    
             }  
         }  
-        res.render('links/room', {room: room});
+        res.render('links/LaViuda/room', {room: room});
     });
 
     return router;
