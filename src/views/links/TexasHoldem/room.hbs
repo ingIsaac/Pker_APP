@@ -22,7 +22,7 @@
         </div>
       </nav>
       <div class="container-fluid">
-        <div id="board" style="text-align:center;">
+        <div id="board" style="text-align: center;">
           <div id="c_table" style="display: inline-flex;"></div>
           <div id="c_player" style="display: inline-flex;"></div>
         </div>
@@ -41,9 +41,9 @@
           </div>
           <div class="col-md-6">
             <ul id="player_data" class="list-group">
-              <li class="list-group-item"><b>Cartas Iniciales:</b> <div><img class="img-fluid" id="_carta_inicial_1" alt="Responsive image" width="80" height="40" src=""><img class="img-fluid" id="_carta_inicial_2" style="margin-left: 1em;" alt="Responsive image" width="80" height="40" src=""></div></li>
-              <li class="list-group-item"><b>Fichas: $</b><p id="p_fichas"></p></li>
-              <li class="list-group-item"><b>Puntos: </b><p id="p_puntos"></p></li>
+              <li class="list-group-item"><b>Cartas Iniciales:</b> <div><img class="img-fluid" id="_carta_inicial_1" alt="Responsive image" width="80" height="40" src="/pics/cards/card_back.svg"><img class="img-fluid" id="_carta_inicial_2" style="margin-left: 1em;" alt="Responsive image" width="80" height="40" src="/pics/cards/card_back.svg"></div></li>
+              <li class="list-group-item"><b>Fichas:</b> <p id="p_fichas"></p></li>
+              <li class="list-group-item"><b>Puntos:</b> <p id="p_puntos"></p></li>
             </ul>
           </div>                      
         </div>
@@ -421,11 +421,7 @@
       $('#_pasar').hide();
       $('#_igualar_apuesta').hide();
       $('#_subir_apuesta').hide(); 
-      $('#_no_continuar').hide();
-      //------->
-      $('#_carta_inicial_1').hide();
-      $('#_carta_inicial_2').hide();
-      //------->
+      $('#_no_continuar').hide(); 
       $('#get_prev_end_game').hide();
     }
 
@@ -661,25 +657,22 @@
         });
         socket.on('set_table_cards', (data) => {
             $('#c_table').empty();
-            table_cards = data.c_table; //Set Table cards
+            table_cards = data.c_table.cards; //Set Table cards
             for(let i=0; i < data.c_table.length; i++)
             {
-              $('#c_table').append('<div class="col-sm" id="tc_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-top: 0;" onClick="$(this).selectTableCard(this);" onTouch="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');
+              if(data.c_table[i].phase <= data.game_phase)
+              {
+                $('#c_table').append('<div class="col-sm" id="tc_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-top: 0;" onClick="$(this).selectTableCard(this);" onTouch="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].card.img + '" style="width: 100%; height: 100%;"></div>');
+              }
+              else
+              {
+                $('#c_table').append('<div class="col-sm" style="padding: 0 0.1em 0 0.1em; padding-top: 0;"><img src="/pics/cards/card_back.svg" style="width: 100%; height: 100%;"></div>');
+              }
             }
         });     
         socket.on('room_data', (data) => {
             if(data)
             {
-              //Check Table Cards
-              if(data.c_ronda)
-              {
-                $('#c_table').empty();
-                table_cards = data.c_table; //Set Table cards
-                for(let i=0; i < data.c_table.length; i++)
-                {
-                  $('#c_table').append('<div class="col-sm" id="tc_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-top: 0;" onClick="$(this).selectTableCard(this);" onTouch="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].img + '" style="width: 100%; height: 100%;"></div>');                  
-                }              
-              }
               //Set Turn Display
               $('#players').children().css('background', '#F0EFEF');
               $('#' + data.p_turn).css('background','#b6fcba');
@@ -696,22 +689,14 @@
                   toastr.info(player_id, 'Es tu Turno:');
                 }
                 disable = false;
-                //Enable End_Turn button
-                $('#end_turn').show();
-                if(data.c_ronda)
+                //Enables Buttons
+                if(socket.bet === data.max_bet)
                 {
-                  $('#tocar').show();
-                  $('#take_all').hide();
-                  if(data.p_cantake === socket.id)
-                  {
-                    $('#take_all').show();
-                  }                
+                  $('#_pasar').show();
                 }
-                else
-                {
-                  $('#tocar').hide();
-                  $('#take_all').show();   
-                }
+                $('#_igualar_apuesta').show();
+                $('#_subir_apuesta').show();
+                $('#_no_continuar').show();
               }
               else
               {
@@ -729,16 +714,23 @@
                   }
                 }
                 disable = true;
-                $('#end_turn').hide();
-                $('#tocar').hide();
-                $('#take_all').hide();
+                //Disable Buttons
+                $('#_pasar').hide();
+                $('#_igualar_apuesta').hide();
+                $('#_subir_apuesta').hide();
+                $('#_no_continuar').hide();
               }          
             }
         });
         socket.on('player_data', data => {
             if(data)
-            {             
-              $('#p_fichas').text(data.chips);
+            {    
+              if(data.hand.length > 0)
+              {
+                $('#_carta_inicial_1').attr('src', '/pics/cards/' + data.hand[0].img); 
+                $('#_carta_inicial_2').attr('src', '/pics/cards/' + data.hand[1].img);  
+              }   
+              $('#p_fichas').text('$' + data.chips);
               $('#p_puntos').text(data.points);            
             }
         });
@@ -796,7 +788,7 @@
             for(let i=0; i < data.length; i++)
             {
               $('#_P'+ data[i].id).empty();
-              $('#_P'+ data[i].id).append('<p><b>-Puntos:</b> ' + data[i].juego.points + ' <b>-Fichas:</b> ' + data[i].juego.chips + '</p>');
+              $('#_P'+ data[i].id).append('<p><b>-Puntos:</b> ' + data[i].juego.points + ' <b>-Fichas: </b>$' + data[i].juego.chips + '</p>');
               $('#_viudas').text(data[i].viudas);
               if(data[i].juego.extra == null)
               {
@@ -893,10 +885,6 @@
             const apuesta_minima = $('#_monto_apuesta_minima').val();
             socket.emit('init', apuesta_minima);
         });
-        $('#end_turn').on('click', () => {
-            $('#end_turn').hide();
-            socket.emit('end_turn');
-        });     
         $('#nombre').on('click', () => {
             $('#modal').modal('hide');
             socket.emit('nombre', $('#t_nombre').val().toUpperCase());

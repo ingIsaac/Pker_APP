@@ -147,7 +147,7 @@ function setupGame(IO, room, app, data)
             Room.settings.game_phase = 1;
             Room.settings.n_turn = 0;
             Room.settings.min_bet = min > 0 ? min : 0;
-            Room.settings.max_bet = min_bet*2; 
+            Room.settings.max_bet = Room.settings.min_bet*2; 
             Room.settings.dealer = setNewDealer(IO, room, Room.settings.dealer);      
             //Send Data
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
