@@ -97,6 +97,31 @@
     </div>
   </div>
 </div>
+{{! Subir Apuesta }}
+<div class="modal" id="modal4" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="width: 100%; text-align:center;">
+          <h5 class="modal-title">Subir Apuesta</h5>
+        </div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <p id="_saldo_disponible"></p>
+        </div>
+        <input type="number" id="_monto_nueva_apuesta" class="form-control" min="1" max="999999">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="_apostar" data-dismiss="modal">Apostar</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
 {{! Winner }}
 <div class="modal" id="modal5" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
   <div class="modal-dialog" role="document">
@@ -349,10 +374,11 @@
         </button>
       </div>
       <div class="modal-body">
-        <input type="number" id="_monto_apuesta_minima" class="form-control" maxlength="4">
+        <input type="number" id="_monto_apuesta_minima" class="form-control" min="1" max="999999">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-dismiss="modal" id="init">Iniciar</button>
+        <button type="button" class="btn btn-primary" id="init" data-dismiss="modal">Iniciar</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
@@ -405,8 +431,6 @@
     //Reset Function
     function reset()
     {
-      shows_who_knocks = true;    
-      //---------------------
       $('#c_table').empty();
       $('#c_player').empty();
       $('#players').children().css('background', '#F0EFEF');
@@ -430,10 +454,10 @@
       t_card: ''
     }
     let disable = true;
-    let shows_who_knocks = true;
     let table_cards = [];
     let player_cards = [];
     let chat = [];
+    let max_bet = 0;
 
     function salirSecure()
     {
@@ -547,27 +571,35 @@
           pick.p_card = $(e).attr('id');                          
           //Send
           if(pick.p_card !== '' && pick.t_card !== '')
-          {                          
-            const prev_t_card = table_cards[pick.t_card.split('_')[1]];
-            const prev_p_card = player_cards[pick.p_card.split('_')[1]];
+          {             
+            const selected_card = table_cards[pick.t_card.split('_')[1]];
+            player_cards[pick.p_card.split('_')[1]] = selected_card;
 
-            table_cards[pick.t_card.split('_')[1]] = prev_p_card;
-            player_cards[pick.p_card.split('_')[1]] = prev_t_card;
-
-            //Animation
-            $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
-              $(this).remove();
-            });
+            //Animation           
             $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
               $(this).remove();
-            });            
+            });  
 
             pick.p_card = '';
             pick.t_card = '';
-            disable = true;
-            $('#tocar').hide();
-            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);                      
-          }          
+            setTimeout(function(){socket.emit('pick', {player_cards: player_cards});}, 300);                     
+          }
+          else if(pick.t_card !== '')
+          {
+            if(player_cards.length < 5)
+            {
+              const selected_card = table_cards[pick.t_card.split('_')[1]];
+              player_cards.push(selected_card);
+
+              //Animation
+              $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
+                $(this).remove();
+              }); 
+
+              pick.t_card = '';
+              setTimeout(function(){socket.emit('pick', {player_cards: player_cards});}, 300); 
+            }
+          }         
         }
 
         $.fn.selectTableCard = function (e)
@@ -585,26 +617,34 @@
           //Send
           if(pick.p_card !== '' && pick.t_card !== '')
           {             
-            const prev_t_card = table_cards[pick.t_card.split('_')[1]];
-            const prev_p_card = player_cards[pick.p_card.split('_')[1]];
+            const selected_card = table_cards[pick.t_card.split('_')[1]];
+            player_cards[pick.p_card.split('_')[1]] = selected_card;
 
-            table_cards[pick.t_card.split('_')[1]] = prev_p_card;
-            player_cards[pick.p_card.split('_')[1]] = prev_t_card;
-
-            //Animation
-            $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
-              $(this).remove();
-            });
+            //Animation           
             $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
               $(this).remove();
             });  
 
             pick.p_card = '';
             pick.t_card = '';
-            disable = true;
-            $('#tocar').hide();
-            setTimeout(function(){socket.emit('pick', {player_cards: player_cards, table_cards: table_cards});}, 300);                     
-          }                  
+            setTimeout(function(){socket.emit('pick', {player_cards: player_cards});}, 300);                     
+          }
+          else if(pick.t_card !== '')
+          {
+            if(player_cards.length < 5)
+            {
+              const selected_card = table_cards[pick.t_card.split('_')[1]];
+              player_cards.push(selected_card);
+
+              //Animation
+              $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
+                $(this).remove();
+              }); 
+
+              pick.t_card = '';
+              setTimeout(function(){socket.emit('pick', {player_cards: player_cards});}, 300); 
+            }       
+          }               
         }
 
         //Get Status
@@ -673,6 +713,8 @@
         socket.on('room_data', (data) => {
             if(data)
             {
+              //Set Max Bet
+              max_bet = data.max_bet;
               //Set Turn Display
               $('#players').children().css('background', '#F0EFEF');
               $('#' + data.p_turn).css('background','#b6fcba');
@@ -788,11 +830,18 @@
             for(let i=0; i < data.length; i++)
             {
               $('#_P'+ data[i].id).empty();
-              $('#_P'+ data[i].id).append('<p><b>-Puntos:</b> ' + data[i].juego.points + ' <b>-Fichas: </b>$' + data[i].juego.chips + '</p>');
-              $('#_viudas').text(data[i].viudas);
-              if(data[i].juego.extra == null)
+              $('#_P'+ data[i].id).append('<p><b>-Puntos:</b> ' + data[i].juego.points + ' <b>-Fichas: </b>$' + data[i].juego.chips + '</p><p><b>-Apuesta: </b>$' + data[i].juego.bet + '</p>');
+              if(data[i].juego.out)
               {
-                $('#_C'+ data[i].id).empty();
+                $('#' + data[i].id).css('background','#F67F7F');
+                if(data.nombre)
+                {
+                  toastr.error(data.nombre + ' - ' + data.id + ' no va.');
+                }
+                else
+                {
+                  toastr.error(data.id + ' no va.');
+                }     
               }
             }
           }        
@@ -888,6 +937,22 @@
         $('#nombre').on('click', () => {
             $('#modal').modal('hide');
             socket.emit('nombre', $('#t_nombre').val().toUpperCase());
+        });
+        $('#_pasar').on('click', () => {
+            socket.emit('get_player_response');
+        }); 
+        $('#_igualar_apuesta').on('click', () => {
+            socket.emit('get_player_response', max_bet);
+        });
+        $('#_subir_apuesta').on('click', () => {
+            $('#modal4').modal('show');
+        }); 
+        $('#_no_continuar').on('click', () => {
+            socket.emit('get_player_response', -1);
+        }); 
+        $('#_apostar').on('click', () => {
+            const apuesta = $('_monto_nueva_apuesta').val();
+            socket.emit('get_player_response', apuesta);
         });       
         $('#_next_game').on('click', () => {
             $('#modal3').modal('hide');

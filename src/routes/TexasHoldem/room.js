@@ -63,7 +63,7 @@ function getRandomInt(min, max)
 function joinPlayerRoom(IO, socket, room, chips)
 {
     socket.join(room);
-    socket.juego = {points: 0, bet: 0, chips: chips, hand: []};
+    socket.juego = {points: 0, bet: 0, out: false, chips: chips, hand: []};
     IO.to(room).emit('connected', socket.id + " se ha unido a esta partida.");
 }
 
@@ -122,7 +122,9 @@ function setupGame(IO, room, app, data)
             k = IO.sockets.connected[u[i]];
             if(k)
             {                             
-                k.juego.hand = hand;                               
+                k.juego.hand = hand;
+                k.juego.bet = 0;
+                k.juego.out = false;                               
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
@@ -207,6 +209,7 @@ function nextTurn(IO, room, app, socket)
                 changeGamePhase(IO, room, app);
             }
             IO.to(room).emit('room_data', Room.settings);
+            IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
         }
     }
 }
@@ -221,6 +224,7 @@ function changeGamePhase(IO, room, app)
             Room.settings.game_phase += 1;
             const phase = Room.settings.game_phase;
             Room.settings.c_table[phase+1].phase = phase;
+            IO.to(room).emit('set_table_cards', Room.settings);
         }
         else
         {
@@ -235,7 +239,7 @@ function getPlayerResponse(IO, room, app, socket, data)
     if(Room)
     {
         const max_bet = Room.settings.max_bet;
-        if(socket.bet < max_bet && data === 0)
+        if(socket.bet < max_bet && data <= 0)
         {
             Room.settings.max_bet = data;
             Room.settings.pool += data;
@@ -252,6 +256,10 @@ function getPlayerResponse(IO, room, app, socket, data)
         }
         else
         {
+            if(data == -1)
+            {
+                socket.juego.out = true;
+            }
             nextTurn(IO, room, app, socket);
         }
     }
@@ -288,11 +296,14 @@ function endGame(IO, room, app)
                 const k = IO.sockets.connected[u[i]];
                 if(k)
                 {
-                    const hand = JSON.parse(JSON.stringify(k.juego.hand));
-                    const score = scoreHand(hand, Room);
-                    k.juego.points += score.score;
-                    scores.push({id: u[i], nombre: k.nombre, score: score.score, g_type: score.g_type, hand: hand});
-                    k.emit('player_data', k.juego);                                                         
+                    if(!k.juego.out)
+                    {
+                        const hand = JSON.parse(JSON.stringify(k.juego.hand));
+                        const score = scoreHand(hand, Room);
+                        k.juego.points += score.score;
+                        scores.push({id: u[i], nombre: k.nombre, score: score.score, g_type: score.g_type, hand: hand});
+                        k.emit('player_data', k.juego); 
+                    }                                                                           
                 }                   
             }
             scores.sort((a, b) => {
@@ -322,7 +333,7 @@ function getPlayersData(IO, room, app, socketIdList)
         for(let i=0; i < socketIdList.length; i++)
         {
             const player = IO.sockets.connected[socketIdList[i]];
-            players_data.push({id: player.id, juego: player.juego, viudas: Room.settings.widows});
+            players_data.push({id: player.id, juego: player.juego});
         }
     }  
     return players_data;
@@ -823,7 +834,7 @@ module.exports = function(app, IO) {
         socket.on('request_next_game', () => {
             setupGame(IO, socket.handshake.query.r, app, data)
         });   
-        socket.on('get_player_response', () => {
+        socket.on('get_player_response', data => {
             getPlayerResponse(IO, socket.handshake.query.r, app, socket, data)
         });     
         socket.on('lose', () => {
