@@ -933,7 +933,7 @@ module.exports = function(app, IO) {
             const Rooms = IO.sockets.adapter.rooms[room];
             if(Rooms)
             {
-                if(Rooms.length < process.env._APP_MAX_PLAYER_PER_ROOM)
+                if(Rooms.length < process.env._APP_LAVIUDA_MAX_PLAYER_PER_ROOM)
                 {
                     joinPlayerRoom(IO, socket, room)
                 }        
@@ -952,12 +952,27 @@ module.exports = function(app, IO) {
             const room = socket.handshake.query.r;
             //Get player => Players          
             console.log("User disconnected: " + socket.id);
-            IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
-            setNewValuesOnDisconnection(IO, room, app, socket)
-            //Send List of Players
-            sendPlayerList(IO, room)
-            //Set Next Turn
-            nextTurn(IO, room, app, socket)
+            if(socket.nombre)
+            {
+                IO.to(room).emit('disconnected', socket.nombre + ' - ' + socket.id + " ha abandonado esta partida.");
+            }
+            else
+            {
+                IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
+            }
+            const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
+            if(Room)
+            {
+                if(!Room.settings.available)
+                {
+                    //Set Disconnection New Values
+                    setNewValuesOnDisconnection(IO, room, app, socket)
+                    //Send List of Players
+                    sendPlayerList(IO, room)
+                    //Set Next Turn
+                    nextTurn(IO, room, app, socket)
+                }
+            }
         }) 
         
         //Get Data

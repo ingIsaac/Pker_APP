@@ -34,12 +34,12 @@ module.exports = function(app, IO)
     }
 
     router.get('/TexasHoldem', (req, res) => {
-        res.render('links/TexasHoldem/lobby', {max_player_per_room: process.env._APP_MAX_PLAYER_PER_ROOM});
+        res.render('links/TexasHoldem/lobby', {max_player_per_room: process.env._APP_TEXAS_MAX_PLAYER_PER_ROOM});
     });
     
     router.get('/TexasHoldem/created', (req, res) => {
         const r = req.query.r;
-        res.render('links/TexasHoldem/lobby', {url: process.env._APP_URL, room: r, max_player_per_room: process.env._APP_MAX_PLAYER_PER_ROOM});
+        res.render('links/TexasHoldem/lobby', {url: process.env._APP_URL, room: r, max_player_per_room: process.env._APP_TEXAS_MAX_PLAYER_PER_ROOM});
     });
     
     router.post('/TexasHoldem/create', (req, res) => {

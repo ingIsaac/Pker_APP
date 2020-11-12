@@ -34,12 +34,12 @@ module.exports = function(app, IO)
     }
 
     router.get('/LaViuda', (req, res) => {
-        res.render('links/LaViuda/lobby', {max_player_per_room: process.env._APP_MAX_PLAYER_PER_ROOM});
+        res.render('links/LaViuda/lobby', {max_player_per_room: process.env._APP_LAVIUDA_MAX_PLAYER_PER_ROOM});
     });
     
     router.get('/LaViuda/created', (req, res) => {
         const r = req.query.r;
-        res.render('links/LaViuda/lobby', {url: process.env._APP_URL, room: r, max_player_per_room: process.env._APP_MAX_PLAYER_PER_ROOM});
+        res.render('links/LaViuda/lobby', {url: process.env._APP_URL, room: r, max_player_per_room: process.env._APP_LAVIUDA_MAX_PLAYER_PER_ROOM});
     });
     
     router.post('/LaViuda/create', (req, res) => {

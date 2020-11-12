@@ -89,7 +89,7 @@ function sendPlayerList(IO, room)
 }
 
 function setupGame(IO, room, app, data)
-{   
+{        
     let deck = []
     let player_count = 0
 
@@ -139,21 +139,23 @@ function setupGame(IO, room, app, data)
             Room.settings.c_table = [];
             for(let i=(player_count*2); i < ((player_count*2)+5); i++)
             {            
-                Room.settings.c_table.push({card: deck[i], phase: 1});                
-            }
-            Room.settings.c_table[3].phase = 2;
-            Room.settings.c_table[4].phase = 3;
+                Room.settings.c_table.push({card: deck[i], visible: false});                
+            }            
             //Other Settings
-            const min = parseInt(data);
+            let min_bet = 100;
+            if(Room.settings.min_bet == 0)
+            {
+                min_bet = parseInt(data);
+            }
             Room.settings.pool = 0;
-            Room.settings.game_phase = 1;
+            Room.settings.game_phase = 0;
             Room.settings.n_turn = 0;
-            Room.settings.min_bet = min > 0 ? min : 0;
-            Room.settings.max_bet = Room.settings.min_bet*2; 
+            Room.settings.min_bet = min_bet;
+            Room.settings.max_bet = min_bet*2; 
             Room.settings.dealer = setNewDealer(IO, room, Room.settings.dealer);      
             //Send Data
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
-            nextTurn(IO, room, app, {id: Room.settings.dealer})
+            nextTurn(IO, room, app, IO.sockets.connected[Room.settings.dealer])
             IO.to(room).emit('init');
         }
     }
@@ -189,6 +191,11 @@ function setNewDealer(IO, room, dealer)
 function nextTurn(IO, room, app, socket)
 {
     if(IO.sockets.adapter.rooms[room]){
+        if(getOutPlayers(IO, room) == 0)
+        {
+            return endGame(IO, room, app);
+        }
+
         const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
         const t = u.findIndex(p => p == socket.id)
         let next = null;
@@ -201,10 +208,26 @@ function nextTurn(IO, room, app, socket)
 
         const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
-        {
+        {           
             Room.settings.p_turn = next;
             Room.settings.n_turn += 1;
-            if(Room.settings.n_turn == u.length)
+            const p = IO.sockets.connected[next];
+            if(p.juego.out)
+            {
+                return nextTurn(IO, room, app, p);
+            }
+            const t = Room.settings.n_turn;
+            if(t == 1)
+            {
+                socket.bet = Room.settings.min_bet;
+                return nextTurn(IO, room, app, p);
+            }
+            else if(t == 2)
+            {
+                socket.bet = Room.settings.max_bet;
+                return nextTurn(IO, room, app, p);
+            }
+            if(Room.settings.n_turn >= u.length)
             {
                 changeGamePhase(IO, room, app);
             }
@@ -214,16 +237,59 @@ function nextTurn(IO, room, app, socket)
     }
 }
 
+function getOutPlayers(IO, room)
+{
+    let r = 0;
+    const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+    for(let i=0; i < u.length; i++)
+    {  
+        const k = IO.sockets.connected[u[i]];
+        if(k)
+        {
+            if(!k.juego.out)
+            {
+                r++;
+            }    
+        }
+    }
+    return r;
+}
+
 function changeGamePhase(IO, room, app)
 {
     const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
-        if(Room.settings.game_phase <= 3)
+        if(Room.settings.game_phase < 5)
         {
-            Room.settings.game_phase += 1;
+            if(Room.settings.game_phase == 0)
+            {
+                Room.settings.game_phase += 3;
+                const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+                for(let i=0; i < u.length; i++)
+                {  
+                    const k = IO.sockets.connected[u[i]];
+                    if(k)
+                    {
+                        if(!k.juego.out)
+                        {
+                            for(let u=0; u < 3; u++)
+                            {
+                                k.juego.hand.push(Room.settings.c_table[i]);
+                            }
+                        }    
+                    }
+                }
+            }
+            else
+            {
+                Room.settings.game_phase += 1;
+            }
             const phase = Room.settings.game_phase;
-            Room.settings.c_table[phase+1].phase = phase;
+            for(let i=0; i < phase; i++)
+            {
+                Room.settings.c_table[i].visible = true;
+            }
             IO.to(room).emit('set_table_cards', Room.settings);
         }
         else
@@ -333,7 +399,7 @@ function getPlayersData(IO, room, app, socketIdList)
         for(let i=0; i < socketIdList.length; i++)
         {
             const player = IO.sockets.connected[socketIdList[i]];
-            players_data.push({id: player.id, juego: player.juego});
+            players_data.push({id: player.id, nombre: player.nombre, juego: player.juego, max_bet: Room.settings.max_bet});
         }
     }  
     return players_data;
@@ -790,7 +856,7 @@ module.exports = function(app, IO) {
             const Rooms = IO.sockets.adapter.rooms[room];
             if(Rooms)
             {
-                if(Rooms.length < process.env._APP_MAX_PLAYER_PER_ROOM)
+                if(Rooms.length < process.env._APP_TEXAS_MAX_PLAYER_PER_ROOM)
                 {
                     joinPlayerRoom(IO, socket, room, process.env._APP_TEXAS_HOLDEM_INIT_CHIPS)
                 }        
@@ -809,12 +875,27 @@ module.exports = function(app, IO) {
             const room = socket.handshake.query.r;
             //Get player => Players          
             console.log("User disconnected: " + socket.id);
-            IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
-            setNewValuesOnDisconnection(IO, room, app, socket)
-            //Send List of Players
-            sendPlayerList(IO, room)
-            //Set Next Turn
-            nextTurn(IO, room, app, socket)
+            if(socket.nombre)
+            {
+                IO.to(room).emit('disconnected', socket.nombre + ' - ' + socket.id + " ha abandonado esta partida.");
+            }
+            else
+            {
+                IO.to(room).emit('disconnected', socket.id + " ha abandonado esta partida.");
+            }
+            const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
+            if(Room)
+            {
+                if(!Room.settings.available)
+                {
+                    //Set Disconnection New Values
+                    setNewValuesOnDisconnection(IO, room, app, socket)
+                    //Send List of Players
+                    sendPlayerList(IO, room)
+                    //Set Next Turn
+                    nextTurn(IO, room, app, socket)
+                }
+            }      
         }) 
         
         //Get Data
@@ -832,7 +913,7 @@ module.exports = function(app, IO) {
             swapCard(socket, data);
         }); 
         socket.on('request_next_game', () => {
-            setupGame(IO, socket.handshake.query.r, app, data)
+            setupGame(IO, socket.handshake.query.r, app)
         });   
         socket.on('get_player_response', data => {
             getPlayerResponse(IO, socket.handshake.query.r, app, socket, data)

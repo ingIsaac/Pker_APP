@@ -32,7 +32,7 @@
             <button class="btn btn-info btn-block" id="_pasar"><i class="fas fa-arrow-right"></i> Pasar</button>
             <button class="btn btn-info btn-block" id="_igualar_apuesta"><i class="fas fa-equals"></i> Igualar Apuesta</button>
             <button class="btn btn-info btn-block" id="_subir_apuesta"><i class="fas fa-angle-double-up"></i> Subir Apuesta</button>
-            <button class="btn btn-danger btn-block" id="_no_continuar"><i class="fas fa-times-circle"></i> No Continuar</button>
+            <button class="btn btn-danger btn-block" id="_retirarse"><i class="fas fa-times-circle"></i> Retirarse</button>
             <hr>                              
             <button class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal"><i class="fas fa-user"></i> Cambiar Nombre</button>
             <button class="btn btn-secondary btn-block" id="get_prev_end_game"><i class="fas fa-history"></i> Ver Jugada Anterior</button>
@@ -42,6 +42,9 @@
           <div class="col-md-6">
             <ul id="player_data" class="list-group">
               <li class="list-group-item"><b>Cartas Iniciales:</b> <div><img class="img-fluid" id="_carta_inicial_1" alt="Responsive image" width="80" height="40" src="/pics/cards/card_back.svg"><img class="img-fluid" id="_carta_inicial_2" style="margin-left: 1em;" alt="Responsive image" width="80" height="40" src="/pics/cards/card_back.svg"></div></li>
+              <li class="list-group-item"><b>Pool:</b> <p id="_pool"></p></li>
+              <li class="list-group-item"><b>Tu Apuesta:</b> <p id="p_bet"></p></li>
+              <li class="list-group-item"><b>Apuesta Mayor:</b> <p id="_max_bet"></p></li>
               <li class="list-group-item"><b>Fichas:</b> <p id="p_fichas"></p></li>
               <li class="list-group-item"><b>Puntos:</b> <p id="p_puntos"></p></li>
             </ul>
@@ -110,13 +113,13 @@
         </button>
       </div>
       <div class="modal-body">
-        <div>
+        <div style="text-align: center;">
           <p id="_saldo_disponible"></p>
         </div>
         <input type="number" id="_monto_nueva_apuesta" class="form-control" min="1" max="999999">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="_apostar" data-dismiss="modal">Apostar</button>
+        <button type="button" class="btn btn-primary" id="_apostar">Apostar</button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
@@ -377,7 +380,7 @@
         <input type="number" id="_monto_apuesta_minima" class="form-control" min="1" max="999999">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="init" data-dismiss="modal">Iniciar</button>
+        <button type="button" class="btn btn-primary" id="init">Iniciar</button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
@@ -445,7 +448,7 @@
       $('#_pasar').hide();
       $('#_igualar_apuesta').hide();
       $('#_subir_apuesta').hide(); 
-      $('#_no_continuar').hide(); 
+      $('#_retirarse').hide(); 
       $('#get_prev_end_game').hide();
     }
 
@@ -572,7 +575,7 @@
           //Send
           if(pick.p_card !== '' && pick.t_card !== '')
           {             
-            const selected_card = table_cards[pick.t_card.split('_')[1]];
+            const selected_card = table_cards[pick.t_card.split('_')[1]].card;
             player_cards[pick.p_card.split('_')[1]] = selected_card;
 
             //Animation           
@@ -588,7 +591,7 @@
           {
             if(player_cards.length < 5)
             {
-              const selected_card = table_cards[pick.t_card.split('_')[1]];
+              const selected_card = table_cards[pick.t_card.split('_')[1]].card;
               player_cards.push(selected_card);
 
               //Animation
@@ -617,7 +620,7 @@
           //Send
           if(pick.p_card !== '' && pick.t_card !== '')
           {             
-            const selected_card = table_cards[pick.t_card.split('_')[1]];
+            const selected_card = table_cards[pick.t_card.split('_')[1]].card;
             player_cards[pick.p_card.split('_')[1]] = selected_card;
 
             //Animation           
@@ -633,7 +636,7 @@
           {
             if(player_cards.length < 5)
             {
-              const selected_card = table_cards[pick.t_card.split('_')[1]];
+              const selected_card = table_cards[pick.t_card.split('_')[1]].card;
               player_cards.push(selected_card);
 
               //Animation
@@ -697,10 +700,10 @@
         });
         socket.on('set_table_cards', (data) => {
             $('#c_table').empty();
-            table_cards = data.c_table.cards; //Set Table cards
+            table_cards = data.c_table; //Set Table cards
             for(let i=0; i < data.c_table.length; i++)
             {
-              if(data.c_table[i].phase <= data.game_phase)
+              if(data.c_table[i].visible)
               {
                 $('#c_table').append('<div class="col-sm" id="tc_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-top: 0;" onClick="$(this).selectTableCard(this);" onTouch="$(this).selectTableCard(this);"><img src="/pics/cards/' + data.c_table[i].card.img + '" style="width: 100%; height: 100%;"></div>');
               }
@@ -715,6 +718,7 @@
             {
               //Set Max Bet
               max_bet = data.max_bet;
+              $('#_pool').text('$' + data.pool);
               //Set Turn Display
               $('#players').children().css('background', '#F0EFEF');
               $('#' + data.p_turn).css('background','#b6fcba');
@@ -738,7 +742,7 @@
                 }
                 $('#_igualar_apuesta').show();
                 $('#_subir_apuesta').show();
-                $('#_no_continuar').show();
+                $('#_retirarse').show();
               }
               else
               {
@@ -760,7 +764,7 @@
                 $('#_pasar').hide();
                 $('#_igualar_apuesta').hide();
                 $('#_subir_apuesta').hide();
-                $('#_no_continuar').hide();
+                $('#_retirarse').hide();
               }          
             }
         });
@@ -772,7 +776,9 @@
                 $('#_carta_inicial_1').attr('src', '/pics/cards/' + data.hand[0].img); 
                 $('#_carta_inicial_2').attr('src', '/pics/cards/' + data.hand[1].img);  
               }   
+              $('#p_bet').text('$' + data.bet);
               $('#p_fichas').text('$' + data.chips);
+              $('#_saldo_disponible').text('$' + data.chips);
               $('#p_puntos').text(data.points);            
             }
         });
@@ -829,18 +835,19 @@
           {
             for(let i=0; i < data.length; i++)
             {
+              $('#_max_bet').text('$' + data[i].max_bet);
               $('#_P'+ data[i].id).empty();
               $('#_P'+ data[i].id).append('<p><b>-Puntos:</b> ' + data[i].juego.points + ' <b>-Fichas: </b>$' + data[i].juego.chips + '</p><p><b>-Apuesta: </b>$' + data[i].juego.bet + '</p>');
               if(data[i].juego.out)
               {
                 $('#' + data[i].id).css('background','#F67F7F');
-                if(data.nombre)
+                if(data[i].nombre)
                 {
-                  toastr.error(data.nombre + ' - ' + data.id + ' no va.');
+                  toastr.error(data[i].nombre + ' - ' + data[i].id + ' se retira.');
                 }
                 else
                 {
-                  toastr.error(data.id + ' no va.');
+                  toastr.error(data[i].id + ' se retira.');
                 }     
               }
             }
@@ -930,9 +937,15 @@
         });
         //Send Data
         $('#init').on('click', () => {
-            $('#pre_init').hide();
             const apuesta_minima = $('#_monto_apuesta_minima').val();
-            socket.emit('init', apuesta_minima);
+            if(parseInt(apuesta_minima) > 0)
+            {
+              socket.emit('init', apuesta_minima);
+            }
+            else
+            {
+              alert('¡Necesitas ingresar un monto de apuesta mínima!');
+            }
         });
         $('#nombre').on('click', () => {
             $('#modal').modal('hide');
@@ -947,12 +960,19 @@
         $('#_subir_apuesta').on('click', () => {
             $('#modal4').modal('show');
         }); 
-        $('#_no_continuar').on('click', () => {
+        $('#_retirarse').on('click', () => {
             socket.emit('get_player_response', -1);
         }); 
         $('#_apostar').on('click', () => {
-            const apuesta = $('_monto_nueva_apuesta').val();
-            socket.emit('get_player_response', apuesta);
+            const apuesta = $('_monto_nueva_apuesta').val();     
+            if(parseInt(apuesta) > 0)
+            {
+              socket.emit('get_player_response', apuesta);
+            }
+            else
+            {
+              alert('¡Necesitas ingresar un monto de apuesta!');
+            }
         });       
         $('#_next_game').on('click', () => {
             $('#modal3').modal('hide');
