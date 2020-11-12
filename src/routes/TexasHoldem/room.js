@@ -63,7 +63,7 @@ function getRandomInt(min, max)
 function joinPlayerRoom(IO, socket, room, chips)
 {
     socket.join(room);
-    socket.juego = {points: 0, bet: 0, out: false, chips: chips, hand: []};
+    socket.juego = {points: 0, action: null, bet: 0, out: false, chips: chips, hand: []};
     IO.to(room).emit('connected', socket.id + " se ha unido a esta partida.");
 }
 
@@ -117,7 +117,7 @@ function setupGame(IO, room, app, data)
             let hand = [];
             for(let v=i*2; v < ((i+1)*2); v++)
             {
-                hand.push(deck[v]);
+                hand.push({card: deck[v], p_card: true, visible: true});
             }
             k = IO.sockets.connected[u[i]];
             if(k)
@@ -139,7 +139,7 @@ function setupGame(IO, room, app, data)
             Room.settings.c_table = [];
             for(let i=(player_count*2); i < ((player_count*2)+5); i++)
             {            
-                Room.settings.c_table.push({card: deck[i], visible: false});                
+                Room.settings.c_table.push({card: deck[i], p_card: false, visible: false});                
             }            
             //Other Settings
             let min_bet = 100;
@@ -195,7 +195,6 @@ function nextTurn(IO, room, app, socket)
         {
             return endGame(IO, room, app);
         }
-
         const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
         const t = u.findIndex(p => p == socket.id)
         let next = null;
@@ -219,20 +218,41 @@ function nextTurn(IO, room, app, socket)
             const t = Room.settings.n_turn;
             if(t == 1)
             {
-                socket.bet = Room.settings.min_bet;
-                return nextTurn(IO, room, app, p);
+                const min_bet = Room.settings.min_bet;
+                if(socket.juego.chips < min_bet)
+                {
+                    lose(IO, room, app, p)
+                }
+                else
+                {
+                    socket.juego.chips -= min_bet;
+                    socket.juego.bet = min_bet;
+                    Room.settings.pool += min_bet;
+                    return nextTurn(IO, room, app, p);
+                }         
             }
             else if(t == 2)
             {
-                socket.bet = Room.settings.max_bet;
-                return nextTurn(IO, room, app, p);
+                const max_bet = Room.settings.max_bet;
+                if(socket.juego.chips < max_bet)
+                {
+                    lose(IO, room, app, p)
+                }
+                else
+                {
+                    socket.juego.chips -= max_bet;
+                    socket.juego.bet = max_bet;
+                    Room.settings.pool += max_bet;
+                    return nextTurn(IO, room, app, p);
+                }
             }
+            IO.to(room).emit('room_data', Room.settings);
+            IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
+            socket.emit('player_data', socket.juego)
             if(Room.settings.n_turn >= u.length)
             {
                 changeGamePhase(IO, room, app);
             }
-            IO.to(room).emit('room_data', Room.settings);
-            IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
         }
     }
 }
@@ -275,8 +295,9 @@ function changeGamePhase(IO, room, app)
                         {
                             for(let u=0; u < 3; u++)
                             {
-                                k.juego.hand.push(Room.settings.c_table[i]);
+                                k.juego.hand.push(Room.settings.c_table[u]);
                             }
+                            k.emit('set_player_cards', k.juego);
                         }    
                     }
                 }
@@ -289,6 +310,16 @@ function changeGamePhase(IO, room, app)
             for(let i=0; i < phase; i++)
             {
                 Room.settings.c_table[i].visible = true;
+            }
+            //---->
+            const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+            for(let i=0; i < u.length; i++)
+            {  
+                const k = IO.sockets.connected[u[i]];
+                if(k)
+                {
+                    k.juego.action = null;    
+                }
             }
             IO.to(room).emit('set_table_cards', Room.settings);
         }
@@ -304,25 +335,27 @@ function getPlayerResponse(IO, room, app, socket, data)
     const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
-        const max_bet = Room.settings.max_bet;
-        if(socket.bet < max_bet && data <= 0)
+        const value = data.value;
+        socket.juego.action = data.action;
+        if(value > 0)
         {
-            Room.settings.max_bet = data;
-            Room.settings.pool += data;
-            if(socket.chips < data)
+            if(socket.juego.chips < value)
             {
                 lose(IO, room, app, socket)
             }
             else
             {
-                socket.chips -= data;
-                socket.bet = data;
+                socket.juego.chips -= value;
+                socket.juego.bet = value;
+                //----->
+                Room.settings.max_bet = value;
+                Room.settings.pool += value;
                 nextTurn(IO, room, app, socket);
             }
         }
         else
         {
-            if(data == -1)
+            if(value == -1)
             {
                 socket.juego.out = true;
             }
@@ -338,7 +371,6 @@ function pickCard(IO, room, app, socket, data)
     const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
-        Room.settings.c_table = data.table_cards;
         IO.to(room).emit('set_table_cards', Room.settings);
     }
 }
@@ -364,7 +396,12 @@ function endGame(IO, room, app)
                 {
                     if(!k.juego.out)
                     {
-                        const hand = JSON.parse(JSON.stringify(k.juego.hand));
+                        let _h = [];
+                        for(let v=0; v < k.juego.hand.length; v++)
+                        {
+                            _h.push(k.juego.hand[v].card);
+                        } 
+                        const hand = JSON.parse(JSON.stringify(_h));
                         const score = scoreHand(hand, Room);
                         k.juego.points += score.score;
                         scores.push({id: u[i], nombre: k.nombre, score: score.score, g_type: score.g_type, hand: hand});

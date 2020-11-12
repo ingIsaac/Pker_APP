@@ -40,7 +40,7 @@
           </div>
           <div class="col-md-6">
             <ul id="player_data" class="list-group">
-              <li class="list-group-item"><b>Comodines:</b> <div><img class="img-fluid" alt="Responsive image" width="80" height="40" src="/pics/cards/red_joker.svg"><img class="img-fluid" id="_comodin" style="margin-left: 1em;" alt="Responsive image" width="80" height="40" src=""></div></li>
+              <li class="list-group-item"><b>Comodines:</b> <div style="margin-top: 0.5em;"><img class="img-fluid" width="80" height="40" src="/pics/cards/red_joker.svg"><img class="img-fluid" id="_comodin" style="margin-left: 1em;" width="80" height="40" src=""></div></li>
               <li class="list-group-item"><b>Fichas:</b> <p id="p_fichas"></p></li>
               <li class="list-group-item"><b>Puntos:</b> <p id="p_puntos"></p></li>
               <li class="list-group-item"><b>Viudas Restantes:</b> <p id="_viudas"></p></li>
@@ -896,7 +896,7 @@
               {
                 toastr.info('Has partido la baraja y te has ganado el comodín!');
                 $('#_C'+ data.id).empty();
-                $('#_C'+ data.id).append('<img src="/pics/cards/' + data.juego.extra.img + '" style="width: 32px; height: 50px;">');
+                $('#_C'+ data.id).append('<img src="/pics/cards/' + data.juego.extra.img + '" style="width: 32px; height: 50px; margin-top: 0.5em;">');
               }
               else
               {
@@ -940,7 +940,7 @@
             for(let i=0; i < data.length; i++)
             {
               $('#_P'+ data[i].id).empty();
-              $('#_P'+ data[i].id).append('<p><b>-Puntos:</b> ' + data[i].juego.points + ' <b>-Fichas:</b> ' + data[i].juego.chips + '</p>');
+              $('#_P'+ data[i].id).append('<hr><b>-Puntos:</b> ' + data[i].juego.points + '</br><b>-Fichas:</b> ' + data[i].juego.chips);
               $('#_viudas').text(data[i].viudas);
               if(data[i].juego.extra == null)
               {

@@ -29,10 +29,10 @@
         <div class="row" style="margin: 1em 0 3em 0;">
           <div class="col-md-6">
             <button class="btn btn-info btn-block" id="pre_init"><i class="fab fa-buffer"></i> Iniciar Partida</button>
-            <button class="btn btn-info btn-block" id="_pasar"><i class="fas fa-arrow-right"></i> Pasar</button>
-            <button class="btn btn-info btn-block" id="_igualar_apuesta"><i class="fas fa-equals"></i> Igualar Apuesta</button>
-            <button class="btn btn-info btn-block" id="_subir_apuesta"><i class="fas fa-angle-double-up"></i> Subir Apuesta</button>
-            <button class="btn btn-danger btn-block" id="_retirarse"><i class="fas fa-times-circle"></i> Retirarse</button>
+            <button class="btn btn-info btn-block" id="_pasar"><i class="fas fa-arrow-right"></i> Pasar (Check)</button>
+            <button class="btn btn-info btn-block" id="_igualar_apuesta"><i class="fas fa-equals"></i> Igualar Apuesta (Call)</button>
+            <button class="btn btn-info btn-block" id="_subir_apuesta"><i class="fas fa-angle-double-up"></i> Subir Apuesta (Raise)</button>
+            <button class="btn btn-danger btn-block" id="_retirarse"><i class="fas fa-times-circle"></i> Retirarse (Fold)</button>
             <hr>                              
             <button class="btn btn-secondary btn-block" data-toggle="modal" data-target="#modal"><i class="fas fa-user"></i> Cambiar Nombre</button>
             <button class="btn btn-secondary btn-block" id="get_prev_end_game"><i class="fas fa-history"></i> Ver Jugada Anterior</button>
@@ -41,8 +41,8 @@
           </div>
           <div class="col-md-6">
             <ul id="player_data" class="list-group">
-              <li class="list-group-item"><b>Cartas Iniciales:</b> <div><img class="img-fluid" id="_carta_inicial_1" alt="Responsive image" width="80" height="40" src="/pics/cards/card_back.svg"><img class="img-fluid" id="_carta_inicial_2" style="margin-left: 1em;" alt="Responsive image" width="80" height="40" src="/pics/cards/card_back.svg"></div></li>
-              <li class="list-group-item"><b>Pool:</b> <p id="_pool"></p></li>
+              <li class="list-group-item"><b>Cartas Iniciales:</b> <div style="margin-top: 0.5em;"><img class="img-fluid" id="_carta_inicial_1" width="80" height="40" src="/pics/cards/card_back.svg"><img class="img-fluid" id="_carta_inicial_2" style="margin-left: 1em;" width="80" height="40" src="/pics/cards/card_back.svg"></div></li>
+              <li class="list-group-item"><b>Pool:</b> <p id="_pool">$0</p></li>
               <li class="list-group-item"><b>Tu Apuesta:</b> <p id="p_bet"></p></li>
               <li class="list-group-item"><b>Apuesta Mayor:</b> <p id="_max_bet"></p></li>
               <li class="list-group-item"><b>Fichas:</b> <p id="p_fichas"></p></li>
@@ -106,20 +106,17 @@
     <div class="modal-content">
       <div class="modal-header">
         <div style="width: 100%; text-align:center;">
-          <h5 class="modal-title">Subir Apuesta</h5>
+          <h5 class="modal-title">Subir Apuesta (Raise)</h5>
         </div>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
       </div>
       <div class="modal-body">
         <div style="text-align: center;">
-          <p id="_saldo_disponible"></p>
+          <h2 id="_saldo_disponible"></h2>
         </div>
-        <input type="number" id="_monto_nueva_apuesta" class="form-control" min="1" max="999999">
+        <input type="number" id="_monto_subir_apuesta" class="form-control" min="1" max="999999">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="_apostar">Apostar</button>
+        <button type="button" class="btn btn-primary" id="_subir_apostar_btn">Subir Apuesta</button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
@@ -364,17 +361,14 @@
     </div>
   </div>
 </div>
-{{! Asignar Monto Apuesta Minima }}
+{{! Asignar Monto Apuesta Minima - Ciega Chica }}
 <div class="modal" id="modal8" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <div style="width: 100%; text-align:center;">
-          <h5 class="modal-title">Asignar Monto de Apuesta Minima</h5>
+          <h5 class="modal-title">Asignar Monto de Apuesta Mínima (Ciega Pequeña)</h5>
         </div>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
       </div>
       <div class="modal-body">
         <input type="number" id="_monto_apuesta_minima" class="form-control" min="1" max="999999">
@@ -576,78 +570,71 @@
           if(pick.p_card !== '' && pick.t_card !== '')
           {             
             const selected_card = table_cards[pick.t_card.split('_')[1]].card;
-            player_cards[pick.p_card.split('_')[1]] = selected_card;
+            const hand_card = player_cards[pick.p_card.split('_')[1]];
 
-            //Animation           
-            $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
-              $(this).remove();
-            });  
-
-            pick.p_card = '';
-            pick.t_card = '';
-            setTimeout(function(){socket.emit('pick', {player_cards: player_cards});}, 300);                     
-          }
-          else if(pick.t_card !== '')
-          {
-            if(player_cards.length < 5)
+            if(!hand_card.p_card)
             {
-              const selected_card = table_cards[pick.t_card.split('_')[1]].card;
-              player_cards.push(selected_card);
+              const t = player_cards.find(c => c.card.img == selected_card.img);
+              if(!t)
+              {
+                player_cards[pick.p_card.split('_')[1]].card = selected_card;
 
-              //Animation
-              $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
-                $(this).remove();
-              }); 
+                //Animation           
+                $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
+                  $(this).remove();
+                });
+                $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
+                  $(this).remove();
+                });   
 
-              pick.t_card = '';
-              setTimeout(function(){socket.emit('pick', {player_cards: player_cards});}, 300); 
-            }
-          }         
+                pick.p_card = '';
+                pick.t_card = '';
+                setTimeout(function()
+                {
+                  socket.emit('pick', {player_cards: player_cards});
+                  $('#c_table').children().css({"padding-top": "0"});
+                }, 300); 
+              }
+            } 
+          }
         }
 
         $.fn.selectTableCard = function (e)
-        {
-          if(disable){return}        
-          if(pick.t_card === $(e).attr('id'))
-          {
-            $(e).css({"padding-top": "0"});
-            pick.t_card = '';
-            return
-          }
+        {        
           $('#c_table').children().css({"padding-top": "0"});
-          $(e).css({"padding-top": "2em"});
+          $(e).css({"padding-top": "2em"}); 
           pick.t_card = $(e).attr('id');            
           //Send
           if(pick.p_card !== '' && pick.t_card !== '')
           {             
             const selected_card = table_cards[pick.t_card.split('_')[1]].card;
-            player_cards[pick.p_card.split('_')[1]] = selected_card;
+            const hand_card = player_cards[pick.p_card.split('_')[1]];
 
-            //Animation           
-            $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
-              $(this).remove();
-            });  
-
-            pick.p_card = '';
-            pick.t_card = '';
-            setTimeout(function(){socket.emit('pick', {player_cards: player_cards});}, 300);                     
-          }
-          else if(pick.t_card !== '')
-          {
-            if(player_cards.length < 5)
+            if(!hand_card.p_card)
             {
-              const selected_card = table_cards[pick.t_card.split('_')[1]].card;
-              player_cards.push(selected_card);
+              const t = player_cards.find(c => c.card.img == selected_card.img);
+              if(!t)
+              {
+                player_cards[pick.p_card.split('_')[1]].card = selected_card;
 
-              //Animation
-              $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
-                $(this).remove();
-              }); 
+                //Animation           
+                $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
+                  $(this).remove();
+                });
+                $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
+                  $(this).remove();
+                });   
 
-              pick.t_card = '';
-              setTimeout(function(){socket.emit('pick', {player_cards: player_cards});}, 300); 
-            }       
-          }               
+                pick.p_card = '';
+                pick.t_card = '';
+                setTimeout(function()
+                {
+                  socket.emit('pick', {player_cards: player_cards});
+                  $('#c_table').children().css({"padding-top": "0"});
+                }, 300); 
+              }
+            }                    
+          }           
         }
 
         //Get Status
@@ -695,7 +682,14 @@
             player_cards = data.hand; //Set Player Hand
             for(let i=0; i < data.hand.length; i++)
             {
-              $('#c_player').append('<div class="col-sm" id="ph_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-bottom: 0;" onClick="$(this).selectPlayerCard(this);" onTouch="$(this).selectPlayerCard(this);"><img src="/pics/cards/' + data.hand[i].img + '" style="width: 100%; height: 100%;"></div>');
+              if(data.hand[i].p_card)
+              {
+                $('#c_player').append('<div class="col-sm" id="ph_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-bottom: 0;" onClick="$(this).selectPlayerCard(this);" onTouch="$(this).selectPlayerCard(this);"><img src="/pics/cards/' + data.hand[i].card.img + '" style="width: 100%; height: 100%;"></div>');
+              }
+              else
+              {
+                $('#c_player').append('<div class="col-sm" id="ph_' + i + '" style="padding: 0 0.1em 0 0.1em; padding-bottom: 0;" onClick="$(this).selectPlayerCard(this);" onTouch="$(this).selectPlayerCard(this);"><img src="/pics/cards/' + data.hand[i].card.img + '" style="width: 80%; height: 80%;"></div>');
+              }
             }
         });
         socket.on('set_table_cards', (data) => {
@@ -773,8 +767,8 @@
             {    
               if(data.hand.length > 0)
               {
-                $('#_carta_inicial_1').attr('src', '/pics/cards/' + data.hand[0].img); 
-                $('#_carta_inicial_2').attr('src', '/pics/cards/' + data.hand[1].img);  
+                $('#_carta_inicial_1').attr('src', '/pics/cards/' + data.hand[0].card.img); 
+                $('#_carta_inicial_2').attr('src', '/pics/cards/' + data.hand[1].card.img);  
               }   
               $('#p_bet').text('$' + data.bet);
               $('#p_fichas').text('$' + data.chips);
@@ -827,9 +821,6 @@
               $('#modal3').modal('show');
             }
         });
-        socket.on('send_next_game', () => {
-          reset();
-        });
         socket.on('players_data', data => {
           if(data)
           {
@@ -837,7 +828,7 @@
             {
               $('#_max_bet').text('$' + data[i].max_bet);
               $('#_P'+ data[i].id).empty();
-              $('#_P'+ data[i].id).append('<p><b>-Puntos:</b> ' + data[i].juego.points + ' <b>-Fichas: </b>$' + data[i].juego.chips + '</p><p><b>-Apuesta: </b>$' + data[i].juego.bet + '</p>');
+              $('#_P'+ data[i].id).append('<hr><b>-Puntos:</b> ' + data[i].juego.points + '</br><b>-Fichas: </b>$' + data[i].juego.chips + '</br><b>-Apuesta: </b>$' + data[i].juego.bet + (data[i].juego.action ? '<hr>' + data[i].juego.action : ''));
               if(data[i].juego.out)
               {
                 $('#' + data[i].id).css('background','#F67F7F');
@@ -937,10 +928,10 @@
         });
         //Send Data
         $('#init').on('click', () => {
-            const apuesta_minima = $('#_monto_apuesta_minima').val();
-            if(parseInt(apuesta_minima) > 0)
+            const value = $('#_monto_apuesta_minima').val();
+            if(parseInt(value) > 0)
             {
-              socket.emit('init', apuesta_minima);
+              socket.emit('init', value);
             }
             else
             {
@@ -952,28 +943,28 @@
             socket.emit('nombre', $('#t_nombre').val().toUpperCase());
         });
         $('#_pasar').on('click', () => {
-            socket.emit('get_player_response');
+            socket.emit('get_player_response', {action: 'Check', value: 0});
         }); 
         $('#_igualar_apuesta').on('click', () => {
-            socket.emit('get_player_response', max_bet);
+            socket.emit('get_player_response', {action: 'Call', value: max_bet});
         });
-        $('#_subir_apuesta').on('click', () => {
-            $('#modal4').modal('show');
-        }); 
         $('#_retirarse').on('click', () => {
-            socket.emit('get_player_response', -1);
-        }); 
-        $('#_apostar').on('click', () => {
-            const apuesta = $('_monto_nueva_apuesta').val();     
-            if(parseInt(apuesta) > 0)
+            socket.emit('get_player_response', {action: 'Fold', value: -1});
+        });
+        $('#_subir_apostar_btn').on('click', () => {
+            const value = $('_monto_subir_apuesta').val();     
+            if(parseInt(value) > 0)
             {
-              socket.emit('get_player_response', apuesta);
+              socket.emit('get_player_response',  {action: 'Rise', value: value});
             }
             else
             {
               alert('¡Necesitas ingresar un monto de apuesta!');
             }
-        });       
+        });
+        $('#_subir_apuesta').on('click', () => {
+            $('#modal4').modal('show');
+        });        
         $('#_next_game').on('click', () => {
             $('#modal3').modal('hide');
             socket.emit('request_next_game');
