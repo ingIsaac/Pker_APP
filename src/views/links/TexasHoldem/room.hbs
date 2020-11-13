@@ -110,7 +110,8 @@
         </div>
       </div>
       <div class="modal-body">
-        <div style="text-align: center;">
+        <div style="text-align: center; margin-bottom: 1em;">
+          <p>Saldo Disponible:</p>
           <h2 id="_saldo_disponible"></h2>
         </div>
         <input type="number" id="_monto_subir_apuesta" class="form-control" min="1" max="999999">
@@ -361,17 +362,18 @@
     </div>
   </div>
 </div>
-{{! Asignar Monto Apuesta Minima - Ciega Chica }}
+{{! Asignar Monto Apuesta Minima - Ciega Pequeña }}
 <div class="modal" id="modal8" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <div style="width: 100%; text-align:center;">
-          <h5 class="modal-title">Asignar Monto de Apuesta Mínima (Ciega Pequeña)</h5>
+          <h5>Ciega Pequeña</h5>
+          <h6 class="modal-title">Asignar Monto de Apuesta Mínima</h6>
         </div>
       </div>
       <div class="modal-body">
-        <input type="number" id="_monto_apuesta_minima" class="form-control" min="1" max="999999">
+        <input type="number" id="_monto_apuesta_minima" class="form-control" min="1" max="999999" value="100">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" id="init">Iniciar</button>
@@ -450,10 +452,10 @@
       p_card: '',
       t_card: ''
     }
-    let disable = true;
     let table_cards = [];
     let player_cards = [];
     let chat = [];
+    let bet = 0;
     let max_bet = 0;
 
     function salirSecure()
@@ -580,9 +582,6 @@
                 player_cards[pick.p_card.split('_')[1]].card = selected_card;
 
                 //Animation           
-                $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
-                  $(this).remove();
-                });
                 $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
                   $(this).remove();
                 });   
@@ -600,7 +599,13 @@
         }
 
         $.fn.selectTableCard = function (e)
-        {        
+        {   
+          if(pick.t_card === $(e).attr('id'))
+          {
+            $(e).css({"padding-top": "0"});
+            pick.t_card = '';
+            return
+          }     
           $('#c_table').children().css({"padding-top": "0"});
           $(e).css({"padding-top": "2em"}); 
           pick.t_card = $(e).attr('id');            
@@ -618,9 +623,6 @@
                 player_cards[pick.p_card.split('_')[1]].card = selected_card;
 
                 //Animation           
-                $('#' + pick.t_card).toggleClass('animate__animated animate__fadeOutDown animate__faster', () => {
-                  $(this).remove();
-                });
                 $('#' + pick.p_card).toggleClass('animate__animated animate__fadeOutUp animate__faster', () => {
                   $(this).remove();
                 });   
@@ -641,12 +643,13 @@
         socket.on('connected', (data) => {
             toastr.success(data);
         });
+        //Get Disconnection
         socket.on('disconnected', (data) => {
             toastr.warning(data);
         });
         //Get Message
         socket.on('message', (data) => {
-            toastr.info(data);
+            alert(data);
         });
         //Get Data
         socket.on('players', (data) => {
@@ -658,7 +661,7 @@
                   $('#p_name').empty();
                   $('#p_name').append('<h4 id="_j_name" hidden>' + data[i].nombre + '</h4><h6 id="_j_id">' + data[i].id + '</h6>');
                 }
-                $('#players').append('<li id="' + data[i].id + '" class="list-group-item"><h5 id="pn_li_' + data[i].id + '" hidden>' + data[i].nombre + '</h5>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');
+                $('#players').append('<li style="margin-top: 0.3em;" id="' + data[i].id + '" class="list-group-item"><h5 id="pn_li_' + data[i].id + '" hidden>' + data[i].nombre + '</h5>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');
             }
             socket.emit('reload_player_data');          
         });
@@ -680,6 +683,7 @@
         socket.on('set_player_cards', (data) => {
             $('#c_player').empty();
             player_cards = data.hand; //Set Player Hand
+            console.log(player_cards);
             for(let i=0; i < data.hand.length; i++)
             {
               if(data.hand[i].p_card)
@@ -728,13 +732,17 @@
                 {
                   toastr.info(player_id, 'Es tu Turno:');
                 }
-                disable = false;
                 //Enables Buttons
-                if(socket.bet === data.max_bet)
+                if(bet === data.max_bet)
                 {
                   $('#_pasar').show();
+                  $('#_igualar_apuesta').hide();
                 }
-                $('#_igualar_apuesta').show();
+                else
+                {
+                  $('#_pasar').hide();
+                  $('#_igualar_apuesta').show();
+                }
                 $('#_subir_apuesta').show();
                 $('#_retirarse').show();
               }
@@ -753,7 +761,6 @@
                     toastr.info(player_id, 'Es Turno de:');
                   }
                 }
-                disable = true;
                 //Disable Buttons
                 $('#_pasar').hide();
                 $('#_igualar_apuesta').hide();
@@ -770,15 +777,13 @@
                 $('#_carta_inicial_1').attr('src', '/pics/cards/' + data.hand[0].card.img); 
                 $('#_carta_inicial_2').attr('src', '/pics/cards/' + data.hand[1].card.img);  
               }   
-              $('#p_bet').text('$' + data.bet);
+              bet = data.bet;
+              $('#p_bet').text('$' + bet);
               $('#p_fichas').text('$' + data.chips);
               $('#_saldo_disponible').text('$' + data.chips);
               $('#p_puntos').text(data.points);            
             }
-        });
-        socket.on('check_player_chips', data => {           
-            socket.emit('lose');                                                
-        });
+        }); 
         socket.on('end_game', data => {
             if(data)
             {             
@@ -828,7 +833,8 @@
             {
               $('#_max_bet').text('$' + data[i].max_bet);
               $('#_P'+ data[i].id).empty();
-              $('#_P'+ data[i].id).append('<hr><b>-Puntos:</b> ' + data[i].juego.points + '</br><b>-Fichas: </b>$' + data[i].juego.chips + '</br><b>-Apuesta: </b>$' + data[i].juego.bet + (data[i].juego.action ? '<hr>' + data[i].juego.action : ''));
+              $('#_P'+ data[i].id).append('<hr><b>-Puntos:</b> ' + data[i].juego.points + '</br><b>-Fichas: </b>$' + data[i].juego.chips + '</br><b>-Apuesta: </b>$' + data[i].juego.bet + (data[i].juego.action ? '<hr><b>' + data[i].juego.action + '</b>' : ''));            
+              //FOLD
               if(data[i].juego.out)
               {
                 $('#' + data[i].id).css('background','#F67F7F');
@@ -840,6 +846,35 @@
                 {
                   toastr.error(data[i].id + ' se retira.');
                 }     
+              }
+              else
+              {
+                if(data[i].juego.action && socket.id !== data[i].id)
+                {
+                  if(data[i].juego.action != 'RISE')
+                  {
+                    console.log(data[i].juego.action);
+                    if(data[i].nombre)
+                    {
+                      toastr.info(data[i].nombre + ' - ' + data[i].id + ' ha efectuado una acción.', data[i].juego.action);          
+                    }
+                    else
+                    {
+                      toastr.info(data[i].id + ' ha efectuado una acción.', data[i].juego.action);
+                    } 
+                  }
+                  else
+                  {
+                    if(data[i].nombre)
+                    {
+                      toastr.info(data[i].nombre + ' - ' + data[i].id + ' ha subido la apuesta a $' + data[i].juego.bet + '.', data[i].juego.action);          
+                    }
+                    else
+                    {
+                      toastr.info(data[i].id + ' ha subido la apuesta a $' + data[i].juego.bet + '.', data[i].juego.action);
+                    }
+                  }
+                }                                
               }
             }
           }        
@@ -943,19 +978,19 @@
             socket.emit('nombre', $('#t_nombre').val().toUpperCase());
         });
         $('#_pasar').on('click', () => {
-            socket.emit('get_player_response', {action: 'Check', value: 0});
+            socket.emit('get_player_response', {action: 'CHECK', value: 0});
         }); 
         $('#_igualar_apuesta').on('click', () => {
-            socket.emit('get_player_response', {action: 'Call', value: max_bet});
+            socket.emit('get_player_response', {action: 'CALL', value: max_bet});
         });
         $('#_retirarse').on('click', () => {
-            socket.emit('get_player_response', {action: 'Fold', value: -1});
+            socket.emit('get_player_response', {action: 'FOLD', value: -1});
         });
         $('#_subir_apostar_btn').on('click', () => {
             const value = $('_monto_subir_apuesta').val();     
             if(parseInt(value) > 0)
             {
-              socket.emit('get_player_response',  {action: 'Rise', value: value});
+              socket.emit('get_player_response',  {action: 'RISE', value: value});
             }
             else
             {
@@ -963,6 +998,7 @@
             }
         });
         $('#_subir_apuesta').on('click', () => {
+            $('_monto_subir_apuesta').val('');
             $('#modal4').modal('show');
         });        
         $('#_next_game').on('click', () => {
@@ -994,6 +1030,7 @@
             $('#modal7').modal('show');
         });
         $('#pre_init').on('click', () => {
+            $('#_monto_apuesta_minima').val('');
             $('#modal8').modal('show');
         });
     });

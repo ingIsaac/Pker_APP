@@ -88,17 +88,31 @@ function sendPlayerList(IO, room)
     }
 }
 
-function setupGame(IO, room, app, data)
+function setupGame(IO, room, app, data, socket)
 {        
+    const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
+    if(Room)
+    {
+        if(Room.settings.game_in_course)
+        {
+            return;
+        }
+    }
+
     let deck = []
     let player_count = 0
-
-    const _Rooms = IO.sockets.adapter.rooms[room];
-    if(_Rooms){player_count = _Rooms.length}
+    const Rooms = IO.sockets.adapter.rooms[room];
+    if(Rooms){player_count = Rooms.length}
     
-    if(IO.sockets.adapter.rooms[room]){
+    //Check Players Online
+    if(player_count < 2)
+    {
+        return socket.emit('message', 'Necesitas al menos dos jugadores conectados para comenzar la partida.');
+    }
+
+    if(Rooms){
         let k = null;
-        let u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+        let u = Object.keys(Rooms.sockets);
         let m = null;
         let _cards = JSON.parse(JSON.stringify(cards));
 
@@ -124,13 +138,13 @@ function setupGame(IO, room, app, data)
             {                             
                 k.juego.hand = hand;
                 k.juego.bet = 0;
-                k.juego.out = false;                               
+                k.juego.out = false; 
+                k.juego.action = null;                              
                 k.emit('set_player_cards', k.juego);
                 k.emit('player_data', k.juego);
             }                   
         }        
         //Room Settings
-        const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
         {
             //Disable Room
@@ -147,6 +161,7 @@ function setupGame(IO, room, app, data)
             {
                 min_bet = parseInt(data);
             }
+            Room.settings.game_in_course = true;
             Room.settings.pool = 0;
             Room.settings.game_phase = 0;
             Room.settings.n_turn = 0;
@@ -191,7 +206,7 @@ function setNewDealer(IO, room, dealer)
 function nextTurn(IO, room, app, socket)
 {
     if(IO.sockets.adapter.rooms[room]){
-        if(getOutPlayers(IO, room) == 0)
+        if(getOutPlayers(IO, room) <= 1)
         {
             return endGame(IO, room, app);
         }
@@ -219,14 +234,14 @@ function nextTurn(IO, room, app, socket)
             if(t == 1)
             {
                 const min_bet = Room.settings.min_bet;
-                if(socket.juego.chips < min_bet)
+                if(p.juego.chips < min_bet)
                 {
                     lose(IO, room, app, p)
                 }
                 else
                 {
-                    socket.juego.chips -= min_bet;
-                    socket.juego.bet = min_bet;
+                    p.juego.chips -= min_bet;
+                    p.juego.bet = min_bet;
                     Room.settings.pool += min_bet;
                     return nextTurn(IO, room, app, p);
                 }         
@@ -234,25 +249,25 @@ function nextTurn(IO, room, app, socket)
             else if(t == 2)
             {
                 const max_bet = Room.settings.max_bet;
-                if(socket.juego.chips < max_bet)
+                if(p.juego.chips < max_bet)
                 {
                     lose(IO, room, app, p)
                 }
                 else
                 {
-                    socket.juego.chips -= max_bet;
-                    socket.juego.bet = max_bet;
+                    p.juego.chips -= max_bet;
+                    p.juego.bet = max_bet;
                     Room.settings.pool += max_bet;
                     return nextTurn(IO, room, app, p);
                 }
             }
-            IO.to(room).emit('room_data', Room.settings);
-            IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
-            socket.emit('player_data', socket.juego)
             if(Room.settings.n_turn >= u.length)
             {
-                changeGamePhase(IO, room, app);
+               return changeGamePhase(IO, room, app, socket);
             }
+            socket.emit('player_data', socket.juego);
+            IO.to(room).emit('room_data', Room.settings);           
+            IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
         }
     }
 }
@@ -275,7 +290,7 @@ function getOutPlayers(IO, room)
     return r;
 }
 
-function changeGamePhase(IO, room, app)
+function changeGamePhase(IO, room, app, socket)
 {
     const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
@@ -321,7 +336,10 @@ function changeGamePhase(IO, room, app)
                     k.juego.action = null;    
                 }
             }
+            socket.emit('player_data', socket.juego);
+            IO.to(room).emit('room_data', Room.settings);          
             IO.to(room).emit('set_table_cards', Room.settings);
+            IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
         }
         else
         {
@@ -389,22 +407,41 @@ function endGame(IO, room, app)
         const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
         {
+            Room.settings.game_in_course = false;
+            //---------------------------------->
             for(let i=0; i < u.length; i++)
             {          
                 const k = IO.sockets.connected[u[i]];
                 if(k)
                 {
                     if(!k.juego.out)
-                    {
+                    {                     
                         let _h = [];
                         for(let v=0; v < k.juego.hand.length; v++)
                         {
                             _h.push(k.juego.hand[v].card);
                         } 
+
                         const hand = JSON.parse(JSON.stringify(_h));
                         const score = scoreHand(hand, Room);
+
+                        let add = 0;
+                        let _m = [];
+                        for(let v=0; v < k.juego.hand.length; v++)
+                        {
+                            if(k.juego.hand[v].p_card)
+                            {
+                                _m.push(k.juego.hand[v].card);
+                            }
+                        } 
+
+                        if(!k.juego.hand.find(c => c.card.value == _m[0].value || c.card.value == _m[1].value) && score >= 100 && score < 400)
+                        {
+                            add += (_m[0].value + _m[0].type_value) + (_m[1].value + _m[1].type_value);
+                        }
+
                         k.juego.points += score.score;
-                        scores.push({id: u[i], nombre: k.nombre, score: score.score, g_type: score.g_type, hand: hand});
+                        scores.push({id: u[i], nombre: k.nombre, score: (score.score + add), g_type: score.g_type, hand: hand});
                         k.emit('player_data', k.juego); 
                     }                                                                           
                 }                   
@@ -937,7 +974,7 @@ module.exports = function(app, IO) {
         
         //Get Data
         socket.on('init', data => {
-            setupGame(IO, socket.handshake.query.r, app, data)
+            setupGame(IO, socket.handshake.query.r, app, data, socket)
         });
         socket.on('nombre', nombre => {
             socket.nombre = nombre;

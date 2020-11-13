@@ -94,12 +94,12 @@ function setupGame(IO, room, app)
     let deck = []
     let player_count = 0
 
-    const _Rooms = IO.sockets.adapter.rooms[room];
-    if(_Rooms){player_count = _Rooms.length}
+    const Rooms = IO.sockets.adapter.rooms[room];
+    if(Rooms){player_count = Rooms.length}
     
-    if(IO.sockets.adapter.rooms[room]){
+    if(Rooms){
         let k = null;
-        let u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+        let u = Object.keys(Rooms.sockets);
         let m = null;
         let _cards = JSON.parse(JSON.stringify(cards));
 
@@ -748,8 +748,18 @@ function nextGame(IO, room, app)
     }
 }
 
-function selectSplitDeckPlayer(IO, room, app, data)
+function selectSplitDeckPlayer(IO, room, app, socket, data)
 {
+    //Check Players Online
+    const Rooms = IO.sockets.adapter.rooms[room];
+    if(Rooms)
+    {
+        if(Rooms.length < 2)
+        {
+            return socket.emit('message', 'Necesitas al menos dos jugadores conectados para comenzar la partida.');
+        }
+    }
+
     const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {       
@@ -977,7 +987,7 @@ module.exports = function(app, IO) {
         
         //Get Data
         socket.on('init', data => {
-            selectSplitDeckPlayer(IO, socket.handshake.query.r, app, data)
+            selectSplitDeckPlayer(IO, socket.handshake.query.r, app, socket, data)
         });
         socket.on('nombre', nombre => {
             socket.nombre = nombre;

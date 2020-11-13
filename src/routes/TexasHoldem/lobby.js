@@ -45,7 +45,7 @@ module.exports = function(app, IO)
     router.post('/TexasHoldem/create', (req, res) => {
         checkRooms(IO); //Delete Empty Rooms
         const room_id = uid(50);
-        req.app.locals.Rooms.push({id: room_id, settings: {available: true, max_bet: 0, min_bet: 0, n_turn: 0, p_turn: null, dealer: null, pool: 0, game_phase: 0, c_table: [], chats: []}});
+        req.app.locals.Rooms.push({id: room_id, settings: {available: true, game_in_course: false, max_bet: 0, min_bet: 0, n_turn: 0, p_turn: null, dealer: null, pool: 0, game_phase: 0, c_table: [], chats: []}});
         res.redirect('/TexasHoldem/created?r=' + room_id);
     });
     

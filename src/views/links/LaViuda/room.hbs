@@ -417,7 +417,7 @@
         <img src="/pics/widow_icon.ico" width="150" height="150">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="init" data-dismiss="modal">Iniciar</button>
+        <button type="button" class="btn btn-primary" id="init">Iniciar</button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
@@ -680,12 +680,13 @@
         socket.on('connected', (data) => {
             toastr.success(data);
         });
+        //Get Disconnection
         socket.on('disconnected', (data) => {
             toastr.warning(data);
         });
         //Get Message
         socket.on('message', (data) => {
-            toastr.info(data);
+            alert(data);
         });
         //Get Data
         socket.on('players', (data) => {
@@ -697,7 +698,7 @@
                   $('#p_name').empty();
                   $('#p_name').append('<h4 id="_j_name" hidden>' + data[i].nombre + '</h4><h6 id="_j_id">' + data[i].id + '</h6>');
                 }
-                $('#players').append('<li id="' + data[i].id + '" class="list-group-item"><h5 id="pn_li_' + data[i].id + '" hidden>' + data[i].nombre + '</h5>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');
+                $('#players').append('<li style="margin-top: 0.3em;" id="' + data[i].id + '" class="list-group-item"><h5 id="pn_li_' + data[i].id + '" hidden>' + data[i].nombre + '</h5>' + data[i].id + '<div id="_P' + data[i].id + '"></div><div id="_C' + data[i].id + '"></div></li>');
             }
             socket.emit('reload_player_data');          
         });
@@ -714,7 +715,7 @@
         socket.on('init', () => {
             //Disable Init button
             $('#pre_init').hide();              
-            $('#init').hide();
+            $('#modal8').modal('hide');
         });
         socket.on('set_player_cards', (data) => {
             $('#c_player').empty();
@@ -1101,7 +1102,6 @@
         });
         //Send Data
         $('#init').on('click', () => {
-            $('#pre_init').hide();
             const n_viudas = $('#_numero_viudas').val();
             socket.emit('init', n_viudas);
         });
