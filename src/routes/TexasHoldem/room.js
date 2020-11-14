@@ -52,7 +52,8 @@ const cards = [
     {value: 10, type: "s", wildcard_value: 10, type_value: 4, img: "10_of_spades.svg"},
     {value: 11, type: "s", wildcard_value: 11, type_value: 4, img: "jack_of_spades.svg"},
     {value: 12, type: "s", wildcard_value: 12, type_value: 4, img: "queen_of_spades.svg"},
-    {value: 13, type: "s", wildcard_value: 13, type_value: 4, img: "king_of_spades.svg"}
+    {value: 13, type: "s", wildcard_value: 13, type_value: 4, img: "king_of_spades.svg"},
+    //{value: 0, type: "j", wildcard_value: 0, type_value: 0, img: "red_joker.svg"}
 ]
 
 function getRandomInt(min, max) 
@@ -88,6 +89,22 @@ function sendPlayerList(IO, room)
     }
 }
 
+function kickPlayers(IO, room, Room, app)
+{
+    const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
+    for(let i=0; i < u.length; i++)
+    {  
+        const k = IO.sockets.connected[u[i]];
+        if(k)
+        {
+            if(k.juego.chips < (Room.settings.min_bet * 2))
+            {
+                lose(IO, room, app, k)
+            }   
+        }
+    }   
+}
+
 function setupGame(IO, room, app, data, socket)
 {        
     const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
@@ -97,6 +114,8 @@ function setupGame(IO, room, app, data, socket)
         {
             return;
         }
+
+        kickPlayers(IO, room, Room, app); //Kick players without enough chips
     }
 
     let deck = []
@@ -156,7 +175,7 @@ function setupGame(IO, room, app, data, socket)
                 Room.settings.c_table.push({card: deck[i], p_card: false, visible: false});                
             }            
             //Other Settings
-            let min_bet = 100;
+            let min_bet = Room.settings.min_bet;
             if(Room.settings.min_bet == 0)
             {
                 min_bet = parseInt(data);
@@ -239,39 +258,31 @@ function nextTurn(IO, room, app, socket)
                 const t = Room.settings.n_turn;
                 if(t == 1)
                 {
-                    const min_bet = Room.settings.min_bet;
-                    if(p.juego.chips < min_bet)
-                    {
-                        lose(IO, room, app, p)
-                    }
-                    else
-                    {
-                        p.juego.chips -= min_bet;
-                        p.juego.bet = min_bet;
-                        Room.settings.pool += min_bet;
-                        return nextTurn(IO, room, app, p);
-                    }         
+                    const min_bet = Room.settings.min_bet;                  
+                    p.juego.chips -= min_bet;
+                    p.juego.bet = min_bet;
+                    Room.settings.pool += min_bet;
+                    //Send Data
+                    p.emit('player_data', p.juego);
+                    return nextTurn(IO, room, app, p);                         
                 }
                 else if(t == 2)
                 {
-                    const max_bet = Room.settings.max_bet;
-                    if(p.juego.chips < max_bet)
-                    {
-                        lose(IO, room, app, p)
-                    }
-                    else
-                    {
-                        p.juego.chips -= max_bet;
-                        p.juego.bet = max_bet;
-                        Room.settings.pool += max_bet;
-                        return nextTurn(IO, room, app, p);
-                    }
+                    const max_bet = Room.settings.max_bet;               
+                    p.juego.chips -= max_bet;
+                    p.juego.bet = max_bet;
+                    Room.settings.pool += max_bet;
+                    //Send Data
+                    p.emit('player_data', p.juego);
+                    return nextTurn(IO, room, app, p);               
                 }
             }          
             if(Room.settings.n_turn >= (u.length + k))
             {
-               return changeGamePhase(IO, room, app, socket);
+                IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
+                return changeGamePhase(IO, room, app, socket);
             }
+            //Send Data
             socket.emit('player_data', socket.juego);
             IO.to(room).emit('room_data', Room.settings);           
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
@@ -346,10 +357,13 @@ function changeGamePhase(IO, room, app, socket)
                     k.juego.action = null;    
                 }
             }
+            //Send Data
             socket.emit('player_data', socket.juego);
             IO.to(room).emit('room_data', Room.settings);          
             IO.to(room).emit('set_table_cards', Room.settings);
-            IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
+            setTimeout(function(){
+                IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
+            }, 1000);
         }
         else
         {
@@ -369,7 +383,7 @@ function getPlayerResponse(IO, room, app, socket, data)
         {
             if(socket.juego.chips < value)
             {
-                return socket.emit('message', 'No tienes la fichas suficientes para realizar está acción.');
+                return socket.emit('message', 'No tienes las fichas suficientes para realizar está acción.');
             }
             else
             {
@@ -377,10 +391,13 @@ function getPlayerResponse(IO, room, app, socket, data)
                 if(data.action == 'RISE')
                 {
                     _value = (Room.settings.max_bet - socket.juego.bet) + value;
+                    if(_value == socket.juego.chips)
+                    {
+                        socket.juego.action = 'ALL IN';
+                    }
                     socket.juego.chips -= _value;
-                    Room.settings.pool += _value;
+                    Room.settings.pool += _value;                 
                     //-------------------------->
-                    value = Room.settings.max_bet + value;
                     Room.settings.n_turn = 0;
                 }
                 else 
@@ -458,9 +475,9 @@ function endGame(IO, room, app)
                             }
                         } 
 
-                        if(!k.juego.hand.find(c => c.card.value == _m[0].value || c.card.value == _m[1].value) && score >= 100 && score < 400)
+                        //Tiebreaker
+                        if(!k.juego.hand.find(c => c.card.value == _m[0].value && c.card.value == _m[1].value) && score.score > 100 && score.score < 400)
                         {
-                            console.log('get equal');
                             add += (_m[0].value + _m[0].type_value) + (_m[1].value + _m[1].type_value);
                         }
 
@@ -482,6 +499,7 @@ function endGame(IO, room, app)
                 }
                 _k.emit('player_data', _k.juego);                                          
             }
+            //Send Data
             IO.to(room).emit('end_game', scores);     
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
         }
@@ -880,7 +898,7 @@ function setNewValuesOnDisconnection(IO, room, app, socket)
             if(u.length == 1)
             {
                 const _socket = IO.sockets.connected[u[0]];
-                _socket.emit('winner', {id: _socket.id, nombre: _socket.nombre, puntos: _socket.juego.points});
+                _socket.emit('winner', {id: _socket.id, nombre: _socket.nombre, fichas: _socket.juego.chips, puntos: _socket.juego.points});
             }
 
             //Refresh Dealer
@@ -998,6 +1016,17 @@ module.exports = function(app, IO) {
         
         //Get Data
         socket.on('init', data => {
+            if(!data)
+            {
+                return socket.emit('message', '¡Necesitas ingresar un monto de apuesta mínima!');
+            }
+            else
+            {
+                if(data < 100)
+                {
+                    return socket.emit('message', 'El monto mínimo es de $100.');
+                }
+            }
             setupGame(IO, socket.handshake.query.r, app, data, socket)
         });
         socket.on('nombre', nombre => {
@@ -1015,9 +1044,6 @@ module.exports = function(app, IO) {
         });   
         socket.on('get_player_response', data => {
             getPlayerResponse(IO, socket.handshake.query.r, app, socket, data)
-        });     
-        socket.on('lose', () => {
-            lose(IO, socket.handshake.query.r, app, socket)
         });
         socket.on('reload_player_data', () => {
             socket.emit('player_data', socket.juego); 

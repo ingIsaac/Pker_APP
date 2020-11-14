@@ -43,10 +43,9 @@
             <ul id="player_data" class="list-group">
               <li class="list-group-item"><b>Cartas Iniciales:</b> <div style="margin-top: 0.5em;"><img class="img-fluid" id="_carta_inicial_1" width="80" height="40" src="/pics/cards/card_back.svg"><img class="img-fluid" id="_carta_inicial_2" style="margin-left: 1em;" width="80" height="40" src="/pics/cards/card_back.svg"></div></li>
               <li class="list-group-item"><b>Pool:</b> <p id="_pool">$0</p></li>
-              <li class="list-group-item"><b>Tu Apuesta:</b> <p id="p_bet"></p></li>
-              <li class="list-group-item"><b>Apuesta Mayor:</b> <p id="_max_bet"></p></li>
-              <li class="list-group-item"><b>Fichas:</b> <p id="p_fichas"></p></li>
-              <li class="list-group-item"><b>Puntos:</b> <p id="p_puntos"></p></li>
+              <li class="list-group-item"><div style="display: flex;"><div style="width: 50%;"><b>Ciega Pequeña:</b> <p id="_small_blind">$0</p></div><div style="width: 50%;"><b>Ciega Grande:</b> <p id="_big_blind">$0</p></div></div></li>
+              <li class="list-group-item"><div style="display: flex;"><div style="width: 50%;"><b>Tu Apuesta:</b> <p id="p_bet"></p></div><div style="width: 50%;"><b>Apuesta Mayor:</b> <p id="_max_bet"></p></div></div></li>
+              <li class="list-group-item"><div style="display: flex;"><div style="width: 50%;"><b>Fichas:</b> <p id="p_fichas"></p></div><div style="width: 50%;"><b>Puntos:</b> <p id="p_puntos"></p></div></div></li>
             </ul>
           </div>                      
         </div>
@@ -136,7 +135,7 @@
           <h5 class="modal-title">Felicidades ¡Has Ganado el Juego!</h5>
         </div>
       </div>
-      <div class="modal-body" style="height: 400px;">
+      <div class="modal-body" style="height: 450px;">
         <div class="container">
           <div style="text-align: center;">
             <img src="/pics/winner.png">
@@ -144,7 +143,8 @@
           <div style="margin-top: 1em; text-align: center;">
             <h4 id="winner_name"></h4>
             <h5 id="winner_id"></h5>
-            <h2 id="winner_points"></h2>
+            <h2 id="winner_fichas"></h2>
+            <h5 id="winner_points"></h5>
           </div>
         </div>
       </div>
@@ -717,6 +717,8 @@
               //Set Max Bet
               max_bet = data.max_bet;
               $('#_pool').text('$' + data.pool);
+              $('#_small_blind').text('$' + data.min_bet);
+              $('#_big_blind').text('$' + (data.min_bet * 2));
               //Set Turn Display
               $('#players').children().css('background', '#F0EFEF');
               $('#' + data.p_turn).css('background','#b6fcba');
@@ -833,9 +835,9 @@
             {
               $('#_max_bet').text('$' + data[i].max_bet);
               $('#_P'+ data[i].id).empty();
-              $('#_P'+ data[i].id).append('<hr><b>-Puntos:</b> ' + data[i].juego.points + '</br><b>-Fichas: </b>$' + data[i].juego.chips + '</br><b>-Apuesta: </b>$' + data[i].juego.bet + (data[i].juego.action ? '<hr><b>' + data[i].juego.action + '</b>' : ''));            
-              //FOLD
-              if(data[i].juego.out)
+              $('#_P'+ data[i].id).append('<hr><b>-Puntos:</b> ' + data[i].juego.points + '</br><b>-Fichas: </b>$' + data[i].juego.chips + '</br><b>-Apuesta: </b>$' + data[i].juego.bet + (data[i].juego.action ? '<hr><div style="text-align: center;"><b>' + data[i].juego.action + '</b></div>' : ''));            
+              //Get Actions
+              if(data[i].juego.out) //Fold
               {
                 $('#' + data[i].id).css('background','#F67F7F');
                 if(data[i].nombre)
@@ -847,7 +849,7 @@
                   toastr.error(data[i].id + ' se retira.');
                 }     
               }
-              else
+              else //----->
               {
                 if(data[i].juego.action && socket.id !== data[i].id)
                 {
@@ -905,6 +907,7 @@
           {
             $('#winner_name').text(data.nombre);
             $('#winner_id').text(data.id);
+            $('#winner_fichas').text('$' + data.fichas);
             $('#winner_points').text('Puntos: ' + data.puntos);
             $('#modal5').modal('show');
           }
@@ -966,7 +969,14 @@
             const value = $('#_monto_apuesta_minima').val();
             if(parseInt(value) > 0)
             {
-              socket.emit('init', value);
+              if(value >= 100)
+              {
+                socket.emit('init', value);
+              }
+              else
+              {
+                alert('El monto mínimo es de $100.');
+              }
             }
             else
             {
