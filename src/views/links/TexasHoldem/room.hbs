@@ -987,9 +987,10 @@
             socket.emit('get_player_response', {action: 'FOLD', value: -1});
         });
         $('#_subir_apostar_btn').on('click', () => {
-            const value = $('_monto_subir_apuesta').val();     
+            const value = $('#_monto_subir_apuesta').val();     
             if(parseInt(value) > 0)
             {
+              $('#modal4').modal('hide');
               socket.emit('get_player_response',  {action: 'RISE', value: value});
             }
             else
@@ -998,7 +999,7 @@
             }
         });
         $('#_subir_apuesta').on('click', () => {
-            $('_monto_subir_apuesta').val('');
+            $('_monto_subir_apuesta').val(0);
             $('#modal4').modal('show');
         });        
         $('#_next_game').on('click', () => {
@@ -1030,7 +1031,7 @@
             $('#modal7').modal('show');
         });
         $('#pre_init').on('click', () => {
-            $('#_monto_apuesta_minima').val('');
+            $('#_monto_apuesta_minima').val(100);
             $('#modal8').modal('show');
         });
     });

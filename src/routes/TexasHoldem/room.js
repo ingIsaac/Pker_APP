@@ -169,6 +169,7 @@ function setupGame(IO, room, app, data, socket)
             Room.settings.max_bet = min_bet*2; 
             Room.settings.dealer = setNewDealer(IO, room, Room.settings.dealer);      
             //Send Data
+            IO.to(room).emit('set_table_cards', Room.settings);
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
             nextTurn(IO, room, app, IO.sockets.connected[Room.settings.dealer])
             IO.to(room).emit('init');
@@ -223,6 +224,7 @@ function nextTurn(IO, room, app, socket)
         const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
         if(Room)
         {           
+            let k = 0;
             Room.settings.p_turn = next;
             Room.settings.n_turn += 1;
             const p = IO.sockets.connected[next];
@@ -230,38 +232,43 @@ function nextTurn(IO, room, app, socket)
             {
                 return nextTurn(IO, room, app, p);
             }
-            const t = Room.settings.n_turn;
-            if(t == 1)
+            if(Room.settings.game_phase === 0)
             {
-                const min_bet = Room.settings.min_bet;
-                if(p.juego.chips < min_bet)
+                k = 3;
+                //----------------------------->
+                const t = Room.settings.n_turn;
+                if(t == 1)
                 {
-                    lose(IO, room, app, p)
+                    const min_bet = Room.settings.min_bet;
+                    if(p.juego.chips < min_bet)
+                    {
+                        lose(IO, room, app, p)
+                    }
+                    else
+                    {
+                        p.juego.chips -= min_bet;
+                        p.juego.bet = min_bet;
+                        Room.settings.pool += min_bet;
+                        return nextTurn(IO, room, app, p);
+                    }         
                 }
-                else
+                else if(t == 2)
                 {
-                    p.juego.chips -= min_bet;
-                    p.juego.bet = min_bet;
-                    Room.settings.pool += min_bet;
-                    return nextTurn(IO, room, app, p);
-                }         
-            }
-            else if(t == 2)
-            {
-                const max_bet = Room.settings.max_bet;
-                if(p.juego.chips < max_bet)
-                {
-                    lose(IO, room, app, p)
+                    const max_bet = Room.settings.max_bet;
+                    if(p.juego.chips < max_bet)
+                    {
+                        lose(IO, room, app, p)
+                    }
+                    else
+                    {
+                        p.juego.chips -= max_bet;
+                        p.juego.bet = max_bet;
+                        Room.settings.pool += max_bet;
+                        return nextTurn(IO, room, app, p);
+                    }
                 }
-                else
-                {
-                    p.juego.chips -= max_bet;
-                    p.juego.bet = max_bet;
-                    Room.settings.pool += max_bet;
-                    return nextTurn(IO, room, app, p);
-                }
-            }
-            if(Room.settings.n_turn >= u.length)
+            }          
+            if(Room.settings.n_turn >= (u.length + k))
             {
                return changeGamePhase(IO, room, app, socket);
             }
@@ -295,8 +302,11 @@ function changeGamePhase(IO, room, app, socket)
     const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
+        //---------------------->
         if(Room.settings.game_phase < 5)
         {
+            Room.settings.n_turn = 0; //Reset Turns
+
             if(Room.settings.game_phase == 0)
             {
                 Room.settings.game_phase += 3;
@@ -353,21 +363,34 @@ function getPlayerResponse(IO, room, app, socket, data)
     const Room = app.locals.Rooms[app.locals.Rooms.findIndex(r => r.id === room)];
     if(Room)
     {
-        const value = data.value;
+        let value = parseInt(data.value);
         socket.juego.action = data.action;
         if(value > 0)
         {
             if(socket.juego.chips < value)
             {
-                lose(IO, room, app, socket)
+                return socket.emit('message', 'No tienes la fichas suficientes para realizar está acción.');
             }
             else
             {
-                socket.juego.chips -= value;
+                let _value = 0;
+                if(data.action == 'RISE')
+                {
+                    _value = (Room.settings.max_bet - socket.juego.bet) + value;
+                    socket.juego.chips -= _value;
+                    Room.settings.pool += _value;
+                    //-------------------------->
+                    value = Room.settings.max_bet + value;
+                    Room.settings.n_turn = 0;
+                }
+                else 
+                {
+                    _value = Room.settings.max_bet - socket.juego.bet;
+                    socket.juego.chips -= _value;
+                    Room.settings.pool += _value;
+                }
                 socket.juego.bet = value;
-                //----->
                 Room.settings.max_bet = value;
-                Room.settings.pool += value;
                 nextTurn(IO, room, app, socket);
             }
         }
@@ -437,6 +460,7 @@ function endGame(IO, room, app)
 
                         if(!k.juego.hand.find(c => c.card.value == _m[0].value || c.card.value == _m[1].value) && score >= 100 && score < 400)
                         {
+                            console.log('get equal');
                             add += (_m[0].value + _m[0].type_value) + (_m[1].value + _m[1].type_value);
                         }
 
