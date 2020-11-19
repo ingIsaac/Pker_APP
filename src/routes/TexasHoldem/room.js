@@ -64,7 +64,7 @@ function getRandomInt(min, max)
 function joinPlayerRoom(IO, socket, room, chips)
 {
     socket.join(room);
-    socket.juego = {points: 0, action: null, bet: 0, out: false, chips: chips, hand: []};
+    socket.juego = {points: 0, action: null, bet: 0, out: false, chips: chips, display_action: true, hand: []};
     IO.to(room).emit('connected', socket.id + " se ha unido a esta partida.");
 }
 
@@ -183,6 +183,7 @@ function setupGame(IO, room, app, data, socket)
             Room.settings.game_in_course = true;
             Room.settings.pool = 0;
             Room.settings.game_phase = 0;
+            Room.settings.pre_flop = 3;
             Room.settings.n_turn = 0;
             Room.settings.min_bet = min_bet;
             Room.settings.max_bet = min_bet*2; 
@@ -251,9 +252,8 @@ function nextTurn(IO, room, app, socket)
             {
                 return nextTurn(IO, room, app, p);
             }
-            if(Room.settings.game_phase === 0)
+            if(Room.settings.game_phase == 0)
             {
-                k = 3;
                 //----------------------------->
                 const t = Room.settings.n_turn;
                 if(t == 1)
@@ -272,12 +272,14 @@ function nextTurn(IO, room, app, socket)
                     p.juego.chips -= max_bet;
                     p.juego.bet = max_bet;
                     Room.settings.pool += max_bet;
+                    //Set pre-flop phase
+                    Room.settings.game_phase = 1;
                     //Send Data
                     p.emit('player_data', p.juego);
                     return nextTurn(IO, room, app, p);               
                 }
             }          
-            if(Room.settings.n_turn >= (u.length + k))
+            if(Room.settings.n_turn >= (u.length + Room.settings.pre_flop))
             {
                 IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
                 return changeGamePhase(IO, room, app, socket);
@@ -286,6 +288,10 @@ function nextTurn(IO, room, app, socket)
             socket.emit('player_data', socket.juego);
             IO.to(room).emit('room_data', Room.settings);           
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
+            if(socket.juego.display_action)
+            {
+                socket.juego.display_action = false;
+            }
         }
     }
 }
@@ -318,9 +324,10 @@ function changeGamePhase(IO, room, app, socket)
         {
             Room.settings.n_turn = 0; //Reset Turns
 
-            if(Room.settings.game_phase == 0)
+            if(Room.settings.game_phase == 1)
             {
-                Room.settings.game_phase += 3;
+                Room.settings.game_phase = 3;
+                Room.settings.pre_flop = 0;
                 const u = Object.keys(IO.sockets.adapter.rooms[room].sockets);
                 for(let i=0; i < u.length; i++)
                 {  
@@ -363,6 +370,10 @@ function changeGamePhase(IO, room, app, socket)
             IO.to(room).emit('set_table_cards', Room.settings);
             setTimeout(function(){
                 IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
+                if(socket.juego.display_action)
+                {
+                    socket.juego.display_action = false;
+                }
             }, 1000);
         }
         else
@@ -378,6 +389,7 @@ function getPlayerResponse(IO, room, app, socket, data)
     if(Room)
     {
         let value = parseInt(data.value);
+        socket.juego.display_action = true;
         socket.juego.action = data.action;
         if(value > 0)
         {
@@ -399,15 +411,20 @@ function getPlayerResponse(IO, room, app, socket, data)
                     Room.settings.pool += _value;                 
                     //-------------------------->
                     Room.settings.n_turn = 0;
+                    Room.settings.pre_flop = 0;
+                    //-------------------------->
+                    socket.juego.bet += value;
+                    Room.settings.max_bet += value;
                 }
                 else 
                 {
                     _value = Room.settings.max_bet - socket.juego.bet;
                     socket.juego.chips -= _value;
                     Room.settings.pool += _value;
+                    //-------------------------->
+                    socket.juego.bet = value;
+                    Room.settings.max_bet = value;
                 }
-                socket.juego.bet = value;
-                Room.settings.max_bet = value;
                 nextTurn(IO, room, app, socket);
             }
         }

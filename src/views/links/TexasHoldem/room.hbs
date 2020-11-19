@@ -840,42 +840,47 @@
               if(data[i].juego.out) //Fold
               {
                 $('#' + data[i].id).css('background','#F67F7F');
-                if(data[i].nombre)
+                if(data[i].juego.display_action)
                 {
-                  toastr.error(data[i].nombre + ' - ' + data[i].id + ' se retira.');
-                }
-                else
-                {
-                  toastr.error(data[i].id + ' se retira.');
-                }     
-              }
-              else //----->
-              {
-                if(data[i].juego.action && socket.id !== data[i].id)
-                {
-                  if(data[i].juego.action != 'RISE')
+                  if(data[i].nombre)
                   {
-                    console.log(data[i].juego.action);
-                    if(data[i].nombre)
-                    {
-                      toastr.info(data[i].nombre + ' - ' + data[i].id + ' ha efectuado una acción.', data[i].juego.action);          
-                    }
-                    else
-                    {
-                      toastr.info(data[i].id + ' ha efectuado una acción.', data[i].juego.action);
-                    } 
+                    toastr.error(data[i].nombre + ' - ' + data[i].id + ' se retira.');
                   }
                   else
                   {
-                    if(data[i].nombre)
+                    toastr.error(data[i].id + ' se retira.');
+                  } 
+                }                   
+              }
+              elses
+              {
+                if(data[i].juego.display_action)
+                {
+                  if(data[i].juego.action && socket.id !== data[i].id)
+                  {
+                    if(data[i].juego.action != 'RISE')
                     {
-                      toastr.info(data[i].nombre + ' - ' + data[i].id + ' ha subido la apuesta a $' + data[i].juego.bet + '.', data[i].juego.action);          
+                      if(data[i].nombre)
+                      {
+                        toastr.info(data[i].nombre + ' - ' + data[i].id + ' ha efectuado una acción.', data[i].juego.action);          
+                      }
+                      else
+                      {
+                        toastr.info(data[i].id + ' ha efectuado una acción.', data[i].juego.action);
+                      } 
                     }
                     else
                     {
-                      toastr.info(data[i].id + ' ha subido la apuesta a $' + data[i].juego.bet + '.', data[i].juego.action);
+                      if(data[i].nombre)
+                      {
+                        toastr.info(data[i].nombre + ' - ' + data[i].id + ' ha subido la apuesta a $' + data[i].juego.bet + '.', data[i].juego.action);          
+                      }
+                      else
+                      {
+                        toastr.info(data[i].id + ' ha subido la apuesta a $' + data[i].juego.bet + '.', data[i].juego.action);
+                      }
                     }
-                  }
+                  }     
                 }                                
               }
             }
