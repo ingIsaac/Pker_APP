@@ -514,10 +514,15 @@ function endGame(IO, room, app)
                 {
                     _k.juego.chips += Room.settings.pool;
                 }
-                _k.emit('player_data', _k.juego);                                          
+                _k.emit('player_data', _k.juego); 
+                //-------------------------------> 
+                IO.to(room).emit('pool_winner', {pool: Room.setting.pool, id: _k.id, nombre: _k.nombre});                                           
             }
             //Send Data
-            IO.to(room).emit('end_game', scores);     
+            if(scores.length > 1)
+            {
+                IO.to(room).emit('end_game', scores);     
+            }
             IO.to(room).emit('players_data', getPlayersData(IO, room, app, u));
         }
     }
