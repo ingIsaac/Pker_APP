@@ -850,13 +850,24 @@
         socket.on('pool_winner', data => {
           if(data)
           {
+            $('#modal10').modal('show');
+            //-------------------->
             if(socket.id == data.id)
             {
-              $('#_ganador_pozo').text('');
+              $('#_ganador_pozo').text('¡Te has llevado el pozo!');
+              $('#_monto_ganador_pozo').text('$' + data.pool);
             }
             else
             {
-
+              if(data.nombre)
+              {
+                $('#_ganador_pozo').text(data.nombre + 'se ha llevado el pozo.');
+              }
+              else
+              {
+                $('#_ganador_pozo').text(data.id + 'se ha llevado el pozo.');
+              }
+              $('#_monto_ganador_pozo').text('$' + data.pool);
             }
           }         
         });
