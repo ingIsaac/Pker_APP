@@ -34,6 +34,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 //Locals
 app.locals.appName = process.env._APP_NAME;
+app.locals.year = new Date().getFullYear();
 app.locals.Rooms = [];
 app.locals.precioViuda = process.env._APP_PRECIO_VIUDA;
 app.locals.server_url = process.env._APP_URL;
