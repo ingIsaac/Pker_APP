@@ -11,7 +11,7 @@
                         <button type="button" class="btn btn-success form-control" style="margin-top: 1em;" onClick="copy()"><i class="far fa-copy"></i> Copiar Enlace</button>
                     {{else}}
                         <form action="/TexasHoldem/create" method="post">
-                            <button type="submit" class="btn btn-primary form-control"><i class="fas fa-link"></i> Generar Enlace</button> 
+                            <button type="submit" class="btn btn-primary form-control"><i class="fas fa-link" onclick="disable(this)"></i> Generar Enlace</button> 
                         </form>
                     {{/if}}                       
                 </div>
@@ -26,7 +26,8 @@
     </div>
 </div>
 <script>
-    function copy(){
+    function copy()
+    {
         const copyText = document.createElement('textarea');
         copyText.value = $('#_url').text();
         document.body.appendChild(copyText);
@@ -35,5 +36,11 @@
         document.execCommand('copy');
         document.body.removeChild(copyText);
         toastr.info('Se ha copiado enlace en el portapapeles.');
+    }
+
+    function disable(e)
+    {
+        e.preventDefault();
+        alert('Lo sentimos, esta modalidad de juego aún se encuentra en desarrollo.');
     }
 </script>
