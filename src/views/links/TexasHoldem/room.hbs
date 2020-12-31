@@ -122,38 +122,6 @@
     </div>
   </div>
 </div>
-{{! Winner }}
-<div class="modal" id="modal5" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="pyro" style="position: relative;">
-        <div class="before"></div>
-        <div class="after"></div>
-      </div>
-      <div class="modal-header">
-        <div style="width: 100%; text-align:center;">
-          <h5 class="modal-title">Felicidades ¡Has Ganado el Juego!</h5>
-        </div>
-      </div>
-      <div class="modal-body" style="height: 450px;">
-        <div class="container">
-          <div style="text-align: center;">
-            <img src="/pics/winner.png">
-          </div>
-          <div style="margin-top: 1em; text-align: center;">
-            <h4 id="winner_name"></h4>
-            <h5 id="winner_id"></h5>
-            <h2 id="winner_fichas"></h2>
-            <h5 id="winner_points"></h5>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <a class="btn btn-dark" href="/">Salir</a>
-      </div>
-    </div>
-  </div>
-</div>
 {{! Secure Exit }}
 <div class="modal" id="modal6" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
@@ -402,12 +370,19 @@
 <div class="modal" id="modal10" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
+      <div class="pyro" style="position: relative;" hidden>
+        <div class="before"></div>
+        <div class="after"></div>
+      </div>
       <div class="modal-header">
         <div style="width: 100%; text-align:center;">
           <h6 class="modal-title">Ganandor del Pozo</h6>
         </div>
       </div>
-      <div class="modal-body">
+      <div id="winner_pool_img" style="text-align: center; margin-top: 2em;" hidden>
+          <img src="/pics/pool_winner.gif" height="300" width="300">
+      </div>
+      <div class="modal-body" style="text-align: center;">
           <h5 id="_ganador_pozo"></h5>
           <h2 id="_monto_ganador_pozo"></h2>
       </div>
@@ -856,6 +831,9 @@
             {
               $('#_ganador_pozo').text('¡Te has llevado el pozo!');
               $('#_monto_ganador_pozo').text('$' + data.pool);
+              //------------->
+              $('.pyro').attr('hidden', false);
+              $('#winner_pool_img').attr('hidden', false);
             }
             else
             {
@@ -868,6 +846,9 @@
                 $('#_ganador_pozo').text(data.id + 'se ha llevado el pozo.');
               }
               $('#_monto_ganador_pozo').text('$' + data.pool);
+              //------------->
+              $('.pyro').attr('hidden', true);
+              $('#winner_pool_img').attr('hidden', true);
             }
           }         
         });
@@ -950,16 +931,6 @@
             }            
           }
         });  
-        socket.on('winner', data => {
-          if(data)
-          {
-            $('#winner_name').text(data.nombre);
-            $('#winner_id').text(data.id);
-            $('#winner_fichas').text('$' + data.fichas);
-            $('#winner_points').text('Puntos: ' + data.puntos);
-            $('#modal5').modal('show');
-          }
-        });
         socket.on('chat_messages', data => {
           if(data)
           {           

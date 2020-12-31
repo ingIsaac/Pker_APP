@@ -393,7 +393,14 @@ function getPlayerResponse(IO, room, app, socket, data)
         socket.juego.action = data.action;
         if(value > 0)
         {
-            if(socket.juego.chips < value)
+            const _v = value - socket.juego.bet;
+            
+            if(_v <= 0)
+            {
+                return socket.emit('message', 'No tienes las fichas suficientes para realizar está acción.');
+            }
+
+            if(_v > socket.juego.chips)
             {
                 return socket.emit('message', 'No tienes las fichas suficientes para realizar está acción.');
             }
@@ -401,7 +408,7 @@ function getPlayerResponse(IO, room, app, socket, data)
             {
                 let _value = 0;
                 if(data.action == 'RISE')
-                {
+                {                
                     _value = (Room.settings.max_bet - socket.juego.bet) + value;
                     if(_value == socket.juego.chips)
                     {
@@ -413,7 +420,7 @@ function getPlayerResponse(IO, room, app, socket, data)
                     Room.settings.n_turn = 0;
                     Room.settings.pre_flop = 0;
                     //-------------------------->
-                    socket.juego.bet += value;
+                    socket.juego.bet += _value;
                     Room.settings.max_bet += value;
                 }
                 else 
@@ -516,7 +523,7 @@ function endGame(IO, room, app)
                 }
                 _k.emit('player_data', _k.juego); 
                 //-------------------------------> 
-                IO.to(room).emit('pool_winner', {pool: Room.setting.pool, id: _k.id, nombre: _k.nombre});                                           
+                IO.to(room).emit('pool_winner', {pool: Room.settings.pool, id: _k.id, nombre: _k.nombre});                                           
             }
             //Send Data
             if(scores.length > 1)
@@ -920,7 +927,6 @@ function setNewValuesOnDisconnection(IO, room, app, socket)
             if(u.length == 1)
             {
                 const _socket = IO.sockets.connected[u[0]];
-                _socket.emit('winner', {id: _socket.id, nombre: _socket.nombre, fichas: _socket.juego.chips, puntos: _socket.juego.points});
             }
 
             //Refresh Dealer
