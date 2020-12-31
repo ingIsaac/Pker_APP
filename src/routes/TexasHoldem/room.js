@@ -392,24 +392,13 @@ function getPlayerResponse(IO, room, app, socket, data)
         socket.juego.display_action = true;
         socket.juego.action = data.action;
         if(value > 0)
-        {
-            const _v = value - socket.juego.bet;
-            
-            if(_v <= 0)
-            {
-                return socket.emit('message', 'No tienes las fichas suficientes para realizar está acción.');
-            }
-
-            if(_v > socket.juego.chips)
-            {
-                return socket.emit('message', 'No tienes las fichas suficientes para realizar está acción.');
-            }
-            else
-            {
-                let _value = 0;
-                if(data.action == 'RISE')
-                {                
-                    _value = (Room.settings.max_bet - socket.juego.bet) + value;
+        {          
+            let _value = 0;
+            if(data.action == 'RISE')
+            {                
+                _value = (Room.settings.max_bet - socket.juego.bet) + value;
+                if(socket.juego.chips >= _value && _value > 0)
+                {
                     if(_value == socket.juego.chips)
                     {
                         socket.juego.action = 'ALL IN';
@@ -422,17 +411,29 @@ function getPlayerResponse(IO, room, app, socket, data)
                     //-------------------------->
                     socket.juego.bet += _value;
                     Room.settings.max_bet += value;
+                    nextTurn(IO, room, app, socket);      
                 }
-                else 
+                else
                 {
-                    _value = Room.settings.max_bet - socket.juego.bet;
+                    return socket.emit('message', 'No tienes las fichas suficientes para realizar está acción.');
+                }                   
+            }
+            else 
+            {
+                _value = Room.settings.max_bet - socket.juego.bet;
+                if(socket.juego.chips >= _value && _value > 0)
+                {
                     socket.juego.chips -= _value;
                     Room.settings.pool += _value;
                     //-------------------------->
                     socket.juego.bet = value;
                     Room.settings.max_bet = value;
+                    nextTurn(IO, room, app, socket);   
                 }
-                nextTurn(IO, room, app, socket);
+                else
+                {
+                    return socket.emit('message', 'No tienes las fichas suficientes para realizar está acción.');
+                }                     
             }
         }
         else

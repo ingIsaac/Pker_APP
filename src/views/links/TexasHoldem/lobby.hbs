@@ -9,9 +9,14 @@
                     {{#if room}}
                         <a id="_url" href="{{url}}/TexasHoldem/room?r={{room}}">{{url}}/TexasHoldem/room?r={{room}}</a>
                         <button type="button" class="btn btn-success form-control" style="margin-top: 1em;" onClick="copy()"><i class="far fa-copy"></i> Copiar Enlace</button>
+                        <script>
+                            $(document).ready(function(){
+                                toastr.warning('Esta modalidad de juego aún se encuentra en desarrollo y podría tener algunos errores.', 'Aviso');  
+                            });
+                        </script>
                     {{else}}
                         <form action="/TexasHoldem/create" method="post">
-                            <button type="submit" class="btn btn-primary form-control" onClick="disable(event)"><i class="fas fa-link"></i> Generar Enlace</button> 
+                            <button type="submit" class="btn btn-primary form-control"><i class="fas fa-link"></i> Generar Enlace</button> 
                         </form>
                     {{/if}}                       
                 </div>
@@ -36,13 +41,5 @@
         document.execCommand('copy');
         document.body.removeChild(copyText);
         toastr.info('Se ha copiado enlace en el portapapeles.');
-    }
-
-    function disable(e)
-    {
-        /*
-        e.preventDefault();
-        alert('Lo sentimos, esta modalidad de juego aún se encuentra en desarrollo.');
-        */
     }
 </script>
